@@ -1,0 +1,148 @@
+---
+import { site, getNonHomePages } from "../site";
+
+interface Props {
+  title: string;
+  description?: string;
+  pageSlug: string;
+}
+
+const { title, description, pageSlug } = Astro.props;
+const pageDescription = description ?? site.site.description;
+const fullTitle = pageSlug === "/" ? `${site.site.name} — ${site.site.tagline}` : `${title} · ${site.site.name}`;
+const canonicalUrl = site.site.url ? new URL(pageSlug, site.site.url).toString() : pageSlug;
+
+const fontStack: Record<string, string> = {
+  sans: 'system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, sans-serif',
+  serif: 'Georgia, "Times New Roman", "Iowan Old Style", "Apple Garamond", serif',
+  mono: 'ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Code", "Roboto Mono", monospace',
+};
+
+const jsonLd: Record<string, unknown> = {
+  "@context": "https://schema.org",
+  "@type": site.schema?.type ?? "WebSite",
+  name: site.site.name,
+  description: site.site.description,
+  ...(site.site.url ? { url: site.site.url } : {}),
+  ...(site.schema?.extra ?? {}),
+};
+
+const navPages = getNonHomePages();
+---
+<!doctype html>
+<html lang="en" data-theme={site.theme.mode}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content={site.site.name} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+
+    <link rel="alternate" type="application/json" href="/api/site.json" title={`${site.site.name} content (machine-readable)`} />
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-friendly site guide" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <style is:global define:vars={{ accent: site.theme.accent, fontStack: fontStack[site.theme.font] ?? fontStack.sans }}>
+      :root {
+        --accent: var(--accent);
+        --font: var(--fontStack);
+        --bg: #ffffff;
+        --fg: #111111;
+        --muted: #666666;
+        --border: #e5e5e5;
+        --radius: 6px;
+      }
+      :root[data-theme="dark"] {
+        --bg: #0b0b0b;
+        --fg: #f4f4f4;
+        --muted: #999999;
+        --border: #222222;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root[data-theme="auto"] {
+          --bg: #0b0b0b;
+          --fg: #f4f4f4;
+          --muted: #999999;
+          --border: #222222;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--fg);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+      header.site {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: 1.5rem; padding: 1.25rem 0 2rem; border-bottom: 1px solid var(--border);
+        margin-bottom: 2.5rem; flex-wrap: wrap;
+      }
+      header.site .brand { font-weight: 700; font-size: 1.05rem; color: var(--fg); }
+      header.site nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+      header.site nav a { color: var(--muted); font-size: 0.95rem; }
+      header.site nav a:hover { color: var(--accent); text-decoration: none; }
+
+      main h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 0.5rem; letter-spacing: -0.01em; }
+      main h2 { font-size: 1.5rem; margin: 2rem 0 0.5rem; letter-spacing: -0.01em; }
+      main h3 { font-size: 1.15rem; margin: 1.5rem 0 0.4rem; }
+      main p { margin: 0.85rem 0; }
+      main ul, main ol { padding-left: 1.4rem; }
+      main img { max-width: 100%; height: auto; border-radius: var(--radius); }
+      main blockquote { border-left: 3px solid var(--accent); margin: 1rem 0; padding: 0.25rem 0 0.25rem 1rem; color: var(--muted); }
+      main code { background: var(--border); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.9em; }
+      main pre { background: var(--border); padding: 1rem; border-radius: var(--radius); overflow-x: auto; }
+      main pre code { background: transparent; padding: 0; }
+      main hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+      .tagline { color: var(--muted); font-size: 1.1rem; margin: 0 0 2rem; }
+
+      footer.site {
+        margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+        color: var(--muted); font-size: 0.9rem;
+        display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="site">
+        <a class="brand" href="/">{site.site.name}</a>
+        {navPages.length > 0 && (
+          <nav>
+            {navPages.map((p) => (
+              <a href={p.slug}>{p.title}</a>
+            ))}
+          </nav>
+        )}
+      </header>
+
+      <main>
+        <slot />
+      </main>
+
+      <footer class="site">
+        <span>© {new Date().getFullYear()} {site.site.name}</span>
+        <span>built with <a href="https://github.com/" rel="noopener">loom</a></span>
+      </footer>
+    </div>
+  </body>
+</html>

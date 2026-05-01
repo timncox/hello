@@ -1,0 +1,21 @@
+---
+import { marked } from "marked";
+import Base from "../layouts/Base.astro";
+import { site, pathFromSlug } from "../site";
+
+export async function getStaticPaths() {
+  return site.pages
+    .filter((p) => p.slug !== "/")
+    .map((p) => ({
+      params: { slug: pathFromSlug(p.slug) },
+      props: { page: p },
+    }));
+}
+
+const { page } = Astro.props;
+const html = marked.parse(page.content) as string;
+---
+<Base title={page.title} pageSlug={page.slug}>
+  <h1>{page.title}</h1>
+  <article set:html={html} />
+</Base>

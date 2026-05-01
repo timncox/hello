@@ -1,0 +1,22 @@
+{
+  "site": {
+    "name": "Hello",
+    "tagline": "Just saying hi.",
+    "description": "A small corner of the internet that just says hello."
+  },
+  "pages": [
+    {
+      "slug": "/",
+      "title": "Hello",
+      "content": "# Hello\n\nThat's it. That's the site.\n\nThanks for stopping by."
+    }
+  ],
+  "theme": {
+    "accent": "#ff5500",
+    "mode": "dark",
+    "font": "sans"
+  },
+  "schema": {
+    "type": "WebSite"
+  }
+}

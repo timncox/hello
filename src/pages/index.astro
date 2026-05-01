@@ -1,0 +1,13 @@
+---
+import { marked } from "marked";
+import Base from "../layouts/Base.astro";
+import { site, getPage } from "../site";
+
+const home = getPage("/") ?? site.pages[0];
+const html = marked.parse(home.content) as string;
+---
+<Base title={home.title} description={site.site.description} pageSlug="/">
+  <h1>{site.site.name}</h1>
+  <p class="tagline">{site.site.tagline}</p>
+  <article set:html={html} />
+</Base>
