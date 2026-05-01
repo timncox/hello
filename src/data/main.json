@@ -8,7 +8,7 @@
     {
       "slug": "/",
       "title": "Hello",
-      "content": "# Hello\n\nThat's it. That's the site.\n\nThanks for stopping by."
+      "content": "# Hello\n\nThat's it. That's the site.\n\nThanks for stopping by.\n\nWant to chat? Say hi at hello@example.com"
     },
     {
       "slug": "/about",
