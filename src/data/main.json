@@ -1,7 +1,7 @@
 {
   "site": {
     "name": "Hello",
-    "tagline": "Just saying hi.",
+    "tagline": "A friendly hello",
     "description": "A small corner of the internet that just says hello."
   },
   "pages": [
@@ -9,6 +9,11 @@
       "slug": "/",
       "title": "Hello",
       "content": "# Hello\n\nThat's it. That's the site.\n\nThanks for stopping by."
+    },
+    {
+      "slug": "/about",
+      "title": "About",
+      "content": "# About\n\nThis site exists as a smoke test for [loom](https://github.com/). It's a minimal deployment used to verify that the end-to-end pipeline — content edits, builds, and publishing — is working correctly.\n\nIf you found your way here, hi! There's not much else to see."
     }
   ],
   "theme": {
