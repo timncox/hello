@@ -103,11 +103,12 @@ def fill(times: list[float | None], start: float, end: float) -> list[float]:
 
 
 def collapsed_runs(times: list[float], min_len: int = 3):
-    """Runs of words squashed onto one timestamp: where the ASR skipped a stretch of audio."""
+    """Runs of words squashed together faster than anyone speaks (~15 words/s): where the
+    ASR skipped a stretch of audio and interpolation crammed the missing words in."""
     runs, i = [], 0
     while i < len(times):
         j = i
-        while j + 1 < len(times) and times[j + 1] - times[j] < 0.02:
+        while j + 1 < len(times) and times[j + 1] - times[j] < 0.07:
             j += 1
         if j - i + 1 >= min_len:
             runs.append((i, j))
