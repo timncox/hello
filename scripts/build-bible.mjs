@@ -115,14 +115,22 @@ for (const b of books) {
   await writeFile(join(OUT, "books", `${b.id}.json`), JSON.stringify(b.chapters));
 }
 
+// Narrated books (public/media/<book>/<chapter>.json from scripts/align-audio.py) play as video.
+async function mediaFor(id) {
+  const first = join(ROOT, "public/media", id, "1.json");
+  if (!existsSync(first)) return undefined;
+  const { narrator } = JSON.parse(await readFile(first, "utf8"));
+  return { narrator };
+}
+
 await writeFile(
   join(OUT, "index.json"),
   JSON.stringify({
     translation: TRANSLATION,
     totalVerses: total,
-    books: books.map(({ id, name, refName, genre, chapters }) => ({
-      id, name, refName, genre, chapters: chapters.map((ch) => ch.length),
-    })),
+    books: await Promise.all(books.map(async ({ id, name, refName, genre, chapters }) => ({
+      id, name, refName, genre, chapters: chapters.map((ch) => ch.length), media: await mediaFor(id),
+    }))),
   }),
 );
 

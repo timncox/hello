@@ -58,12 +58,21 @@ The home page is a full-screen Bible feed app, not markdown content:
 
 ```
 src/pages/index.astro      # app shell (uses Base with `bare`)
-src/scripts/app.ts         # all app logic: feed sources, cards, routing (#/books, #/book/<id>, #/read/<id>/<ch>, #/themes, #/theme/<id>, #/me)
+src/scripts/app.ts         # all app logic: feed sources, cards, routing (#/books, #/book/<id>, #/read/<id>/<ch>, #/themes, #/theme/<id>, #/watch, #/me)
+src/scripts/video.ts       # video cards: narration playback, word-synced captions, export to MP4/WebM
+src/scripts/motion.ts      # animated canvas backgrounds, one look per genre
 src/styles/app.css         # app styles (genre gradients, cards, pages)
 src/data/themes.json       # curated themes: references only, e.g. "Romans 8:38-39"
 scripts/build-bible.mjs    # `npm run bible`: regenerates public/bible/ from the source text + themes.json
 public/bible/              # generated: index.json, themes.json, books/<id>.json (don't hand-edit)
+scripts/align-audio.py     # word-level timing for narrated chapters (faster-whisper + alignment to BSB text)
+public/media/<book>/       # narration: <cc>.mp3 (40 kbps mono) + <chapter>.json word timings
 ```
+
+Adding narration for a book (BSB audio is CC0, from openbible.com/audio/souer/BSB_<nn>_<Abc>_<ccc>.mp3):
+1. Download chapter MP3s, re-encode: `ffmpeg -i in.mp3 -ac 1 -ar 24000 -b:a 40k -map_metadata -1 public/media/<book>/<cc>.mp3`
+2. `pip install faster-whisper`, then `python scripts/align-audio.py <book> public/media/<book> --narrator "Bob Souer"`
+3. `npm run bible` so index.json marks the book as narrated; its cards then play as video.
 
 - Scripture text is the Berean Standard Bible (public domain). Do NOT add NIV/ESV/NLT or other copyrighted text without a license.
 - To add or change a theme, edit `src/data/themes.json`, then run `npm run bible` (it fails loudly on a bad reference).

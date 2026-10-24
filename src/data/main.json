@@ -8,12 +8,12 @@
     {
       "slug": "/",
       "title": "Scrollture",
-      "content": "# Scrollture\n\nAn endless, swipeable feed of Bible verses from all 66 books.\n\n- **For You**: a mix of well-loved passages and deep cuts from every corner of scripture\n- **Books**: binge any book in order, shuffle it, or read it chapter by chapter\n- **Themes**: endless scroll on love, anxiety, strength, hope, wisdom, and more\n\nScrollture needs JavaScript to run. See [About](/about) for details on the translation."
+      "content": "# Scrollture\n\nAn endless, swipeable feed of Bible verses from all 66 books.\n\n- **For You**: a mix of well-loved passages and deep cuts from every corner of scripture\n- **Books**: binge any book in order, shuffle it, or read it chapter by chapter\n- **🎬 Watch**: narrated video cards with word-by-word captions, and export any card as a video to share\n- **Themes**: endless scroll on love, anxiety, strength, hope, wisdom, and more\n\nScrollture needs JavaScript to run. See [About](/about) for details on the translation."
     },
     {
       "slug": "/about",
       "title": "About",
-      "content": "# About Scrollture\n\nScrollture turns the whole Bible into an infinite feed. Swipe to see passages from all 66 books, double-tap to like, and tap through to read any passage in context or binge a book from start to finish.\n\n## Translation\n\nScripture text is the **Berean Standard Bible (BSB)**, which has been dedicated to the public domain. Learn more at [berean.bible](https://berean.bible).\n\n## Your data\n\nLikes, streaks, and reading progress are stored only in your browser. Nothing is sent to a server."
+      "content": "# About Scrollture\n\nScrollture turns the whole Bible into an infinite feed. Swipe to see passages from all 66 books, double-tap to like, and tap through to read any passage in context or binge a book from start to finish.\n\n## Translation\n\nScripture text is the **Berean Standard Bible (BSB)**, which has been dedicated to the public domain. Learn more at [berean.bible](https://berean.bible).\n\n## Narration\n\nVideo cards use the Berean Standard Bible audio narration read by Bob Souer, which has been dedicated to the public domain. Captions are synced word-by-word, so every video works with the sound off.\n\n## Your data\n\nLikes, streaks, and reading progress are stored only in your browser. Nothing is sent to a server."
     }
   ],
   "theme": {

@@ -1,7 +1,9 @@
 // Scrollture client app: infinite scripture feed + book/theme drill-down.
 // Vanilla TS, hash-routed, data lazy-loaded from /bible (see scripts/build-bible.mjs).
+// Books with narration in /media play as video cards (see video.ts).
 
-type Genre = "law" | "history" | "wisdom" | "major" | "minor" | "gospels" | "paul" | "general" | "apocalypse";
+import type { Genre } from "./motion";
+import { Stage, loadClip, captionEl, drawStill, renderVideo, canExportVideo, type Clip, type Playable } from "./video";
 
 interface BookMeta {
   id: string;
@@ -9,6 +11,7 @@ interface BookMeta {
   refName: string;
   genre: Genre;
   chapters: number[];
+  media?: { narrator: string };
 }
 
 interface Index {
@@ -36,6 +39,7 @@ type Kind = "banger" | "deep" | "rare" | "seq";
 interface Card extends Passage {
   kind: Kind;
   theme?: string;
+  clip?: Clip;
 }
 
 interface Liked extends Passage {
@@ -272,7 +276,10 @@ function forYouSource(): Source {
   return async () => {
     for (let tries = 0; tries < 10; tries++) {
       let card: Card;
-      if (Math.random() < 0.45) {
+      const narrated = mediaBooks();
+      if (narrated.length && Math.random() < 0.3) {
+        card = await randomFromBook(pick(narrated));
+      } else if (Math.random() < 0.45) {
         const pool = likedThemes();
         const theme = pool.length && Math.random() < 0.4 ? pick(pool) : pick(themes);
         card = { ...pick(theme.passages), kind: "banger", theme: theme.id };
@@ -298,6 +305,21 @@ function themeSource(theme: Theme): Source {
 
 function bookShuffleSource(b: BookMeta): Source {
   return () => randomFromBook(b);
+}
+
+const mediaBooks = () => index.books.filter((b) => b.media);
+
+/** Video-only feed: narrated passages, half the time a curated one. */
+function watchSource(): Source {
+  return async () => {
+    const narrated = new Set(mediaBooks().map((b) => b.id));
+    const bangers = themes.flatMap((t) => t.passages.filter((p) => narrated.has(p.b)).map((p) => ({ p, theme: t.id })));
+    if (bangers.length && Math.random() < 0.5) {
+      const { p, theme } = pick(bangers);
+      return { ...p, kind: "banger", theme };
+    }
+    return randomFromBook(pick(mediaBooks()));
+  };
 }
 
 /** In-order reading that rolls into the next book when one ends. */
@@ -401,7 +423,97 @@ function heartBurst(card: HTMLElement, x: number, y: number) {
   setTimeout(() => el.remove(), 800);
 }
 
-function renderCard(p: Card): HTMLElement {
+// ---------- playback ----------
+
+const stage = new Stage();
+let autoScroll = store.get("auto", false);
+
+stage.onMutedChange = (muted) => {
+  $("#app").classList.toggle("muted", muted);
+  document.querySelectorAll(".act.sound span").forEach((s) => (s.textContent = muted ? "🔇" : "🔊"));
+};
+
+stage.onEnd = () => {
+  if (!autoScroll || !activeFeed) return false;
+  const scroller = $(".feed", activeFeed.el);
+  scroller.scrollBy({ top: scroller.clientHeight, behavior: "smooth" });
+  return true;
+};
+
+function toggleAuto() {
+  autoScroll = !autoScroll;
+  store.set("auto", autoScroll);
+  document.querySelectorAll(".act.auto").forEach((el) => el.classList.toggle("on", autoScroll));
+  toast(autoScroll ? "⏩ Auto-scroll on: sit back" : "Auto-scroll off");
+}
+
+const readingTime = (text: string) => Math.max(4, text.split(/\s+/).length * 0.3 + 1.5);
+
+// ---------- share sheet & video export ----------
+
+function openSheet(onClose: () => void, ...children: (Node | null)[]) {
+  const panel = h("div", { class: "sheet" }, ...children);
+  const backdrop = h("div", { class: "sheet-backdrop" }, panel);
+  const close = () => {
+    backdrop.remove();
+    onClose();
+  };
+  backdrop.addEventListener("click", (e) => e.target === backdrop && close());
+  $("#app").append(backdrop);
+  return { panel, close };
+}
+
+function shareSheet(p: Card, play: Playable) {
+  const videoBtn = canExportVideo() ? h("button", { class: "btn primary" }, "🎬 Save as video") : null;
+  const linkBtn = h("button", { class: "btn" }, "🔗 Share link");
+  const closeBtn = h("button", { class: "btn" }, "Close");
+  const { close } = openSheet(() => {}, h("h3", {}, `Share ${refOf(p)}`), h("div", { class: "sheet-actions" }, videoBtn, linkBtn, closeBtn));
+  closeBtn.addEventListener("click", close);
+  linkBtn.addEventListener("click", () => {
+    close();
+    share(p);
+  });
+  videoBtn?.addEventListener("click", () => {
+    close();
+    exportSheet(p, play);
+  });
+}
+
+async function exportSheet(p: Card, play: Playable) {
+  stage.deactivate();
+  const preview = h("canvas", { class: "export-preview" }) as HTMLCanvasElement;
+  const status = h("p", { class: "muted" }, "🎬 Recording… keep this screen open");
+  const bar = progressBar(0, 1);
+  const fill = bar.firstChild as HTMLElement;
+  const { panel, close } = openSheet(() => activeFeed?.resume(), preview, status, bar);
+  const closeBtn = h("button", { class: "btn" }, "Close");
+  closeBtn.addEventListener("click", close);
+
+  const meta = {
+    ref: refOf(p),
+    translation: index.translation.id,
+    credit: play.clip ? `🎙 Read by ${play.clip.narrator} · ${index.translation.license}` : `${index.translation.name} · ${index.translation.license}`,
+    site: $(".logo").textContent ?? "",
+    accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#ff2e63",
+  };
+  try {
+    const { blob, ext } = await renderVideo(play, meta, preview, (f) => (fill.style.width = `${f * 100}%`));
+    const file = new File([blob], `scrollture-${p.b}-${p.c}-${p.v}.${ext}`, { type: blob.type });
+    status.textContent = `✅ Video ready (${(blob.size / 1e6).toFixed(1)} MB)`;
+    const shareBtn = navigator.canShare?.({ files: [file] }) ? h("button", { class: "btn primary" }, "📤 Share video") : null;
+    shareBtn?.addEventListener("click", () => navigator.share({ files: [file] }).catch(() => {}));
+    const download = h("a", { class: "btn", href: URL.createObjectURL(blob), download: file.name }, "⬇️ Download");
+    panel.append(h("div", { class: "sheet-actions" }, shareBtn, download, closeBtn));
+  } catch (err) {
+    console.error(err);
+    status.textContent = "⚠️ This browser couldn't record a video.";
+    panel.append(h("div", { class: "sheet-actions" }, closeBtn));
+  }
+}
+
+// ---------- cards ----------
+
+function renderCard(p: Card): { el: HTMLElement; play: Playable } {
   const b = bookById.get(p.b)!;
   const theme = p.theme ? themes.find((t) => t.id === p.theme) : undefined;
   const likeBtn = h("button", { class: "act like", "aria-label": "Like" }, h("span", {}, "❤️"), h("small", {}, "Like"));
@@ -421,21 +533,38 @@ function renderCard(p: Card): HTMLElement {
   });
 
   const shareBtn = h("button", { class: "act", "aria-label": "Share" }, h("span", {}, "📤"), h("small", {}, "Share"));
-  shareBtn.addEventListener("click", () => share(p));
+  shareBtn.addEventListener("click", () => shareSheet(p, play));
+
+  const soundBtn = p.clip ? h("button", { class: "act sound", "aria-label": "Sound on/off" }, h("span", {}, stage.muted ? "🔇" : "🔊"), h("small", {}, "Sound")) : null;
+  soundBtn?.addEventListener("click", () => stage.setMuted(!stage.muted));
+
+  const autoBtn = h("button", { class: `act auto${autoScroll ? " on" : ""}`, "aria-label": "Auto-scroll" }, h("span", {}, "⏩"), h("small", {}, "Auto"));
+  autoBtn.addEventListener("click", toggleAuto);
+
+  const pill = p.clip ? h("button", { class: "sound-pill" }, "🔇 Tap for sound") : null;
+  pill?.addEventListener("click", () => stage.setMuted(false));
+
+  const canvas = h("canvas", { class: "bg", "aria-hidden": "true" }) as HTMLCanvasElement;
+  const caption = p.clip ? captionEl(p.clip, `verse ${sizeClass(p.text)}`) : h("blockquote", { class: `verse ${sizeClass(p.text)}` }, p.text);
+  const progress = h("div", {});
+  const badge =
+    p.theme === "wild"
+      ? h("div", { class: "badge k-rare" }, "🤯 UNHINGED")
+      : BADGES[p.kind]
+        ? h("div", { class: `badge k-${p.kind}` }, BADGES[p.kind])
+        : null;
 
   const card = h(
     "article",
-    { class: `card g-${b.genre}`, "data-key": keyOf(p) },
+    { class: `card g-${b.genre}${p.clip ? " video" : ""}`, "data-key": keyOf(p) },
+    canvas,
     h(
       "div",
       { class: "card-body" },
-      p.theme === "wild"
-        ? h("div", { class: "badge k-rare" }, "🤯 UNHINGED")
-        : BADGES[p.kind]
-          ? h("div", { class: `badge k-${p.kind}` }, BADGES[p.kind])
-          : null,
-      h("blockquote", { class: `verse ${sizeClass(p.text)}` }, p.text),
+      badge,
+      caption,
       h("div", { class: "ref" }, refOf(p), h("span", { class: "tr" }, index.translation.id)),
+      p.clip ? h("div", { class: "credit" }, `🎙 ${p.clip.narrator}`) : null,
       h(
         "div",
         { class: "chips" },
@@ -450,21 +579,43 @@ function renderCard(p: Card): HTMLElement {
       h("a", { class: "act", href: `#/read/${b.id}/${p.c}/${p.v}`, "aria-label": "Read in context" }, h("span", {}, "📖"), h("small", {}, "Context")),
       h("a", { class: "act", href: `#/book/${b.id}/play/${p.c}/${p.v}`, "aria-label": "Keep reading from here" }, h("span", {}, "▶️"), h("small", {}, "Binge")),
       shareBtn,
+      soundBtn,
+      autoBtn,
     ),
+    pill,
+    h("div", { class: "pause-icon", "aria-hidden": "true" }, "▶"),
+    h("div", { class: "playbar" }, progress),
   );
 
-  let lastTap = 0;
-  card.addEventListener("pointerup", (ev) => {
+  const play: Playable = {
+    card,
+    canvas,
+    genre: b.genre,
+    seed: Math.random() * 1000,
+    duration: p.clip ? p.clip.end - p.clip.start : readingTime(p.text),
+    clip: p.clip,
+    caption,
+    progress,
+  };
+
+  // Single tap pauses, double tap likes.
+  let tapTimer = 0;
+  card.addEventListener("click", (ev) => {
     if ((ev.target as HTMLElement).closest("a,button")) return;
-    const now = Date.now();
-    if (now - lastTap < 300) {
+    if (tapTimer) {
+      clearTimeout(tapTimer);
+      tapTimer = 0;
       if (!isLiked(p)) doLike(ev.clientX, ev.clientY);
       else heartBurst(card, ev.clientX, ev.clientY);
-      lastTap = 0;
-    } else lastTap = now;
+    } else {
+      tapTimer = window.setTimeout(() => {
+        tapTimer = 0;
+        if (stage.current === play) stage.togglePause();
+      }, 280);
+    }
   });
 
-  return card;
+  return { el: card, play };
 }
 
 // ---------- feed view ----------
@@ -472,11 +623,33 @@ function renderCard(p: Card): HTMLElement {
 interface Feed {
   el: HTMLElement;
   scrollTop: number;
+  /** Start playing whichever card is on screen. */
+  resume: () => void;
+}
+
+const cardData = new WeakMap<Element, { p: Card; play: Playable }>();
+
+async function attachClip(p: Card) {
+  if (!bookById.get(p.b)?.media) return;
+  try {
+    const chapters = await loadBook(p.b);
+    p.clip = (await loadClip(p.b, p.c, p.v, p.e, chapters[p.c - 1])) ?? undefined;
+  } catch (err) {
+    console.warn("No narration, showing text card", err);
+  }
 }
 
 function createFeed(source: Source, label?: { text: string; back: string }): Feed {
   const scroller = h("div", { class: "feed", tabindex: "0" });
-  const feed: Feed = { el: h("div", { class: "feed-wrap" }), scrollTop: 0 };
+  const feed: Feed = {
+    el: h("div", { class: "feed-wrap" }),
+    scrollTop: 0,
+    resume() {
+      const i = Math.round(scroller.scrollTop / (scroller.clientHeight || 1));
+      const data = scroller.children[i] && cardData.get(scroller.children[i]);
+      if (data) stage.activate(data.play);
+    },
+  };
   if (label) {
     feed.el.append(h("div", { class: "feed-label" }, h("span", {}, label.text), h("a", { href: label.back, "aria-label": "Close" }, "✕")));
   }
@@ -485,19 +658,28 @@ function createFeed(source: Source, label?: { text: string; back: string }): Fee
   let loading = false;
   let done = false;
   const seen = new WeakSet<Element>();
+  const drawn = new WeakSet<Element>();
 
   const observer = new IntersectionObserver(
     (entries) => {
       for (const en of entries) {
-        if (!en.isIntersecting || seen.has(en.target)) continue;
-        seen.add(en.target);
-        const card = en.target as HTMLElement & { passage?: Card };
-        if (card.passage) recordSeen(card.passage);
+        const data = cardData.get(en.target);
+        if (!data) continue;
+        if (en.isIntersecting && !drawn.has(en.target)) {
+          drawn.add(en.target);
+          drawStill(data.play);
+        }
+        if (en.intersectionRatio < 0.6) continue;
+        stage.activate(data.play);
+        if (!seen.has(en.target)) {
+          seen.add(en.target);
+          recordSeen(data.p);
+        }
         const cards = scroller.children;
-        if (Array.prototype.indexOf.call(cards, card) >= cards.length - 4) more();
+        if (Array.prototype.indexOf.call(cards, en.target) >= cards.length - 4) more();
       }
     },
-    { root: scroller, threshold: 0.6 },
+    { root: scroller, threshold: [0, 0.6] },
   );
 
   async function more(n = 6) {
@@ -511,10 +693,11 @@ function createFeed(source: Source, label?: { text: string; back: string }): Fee
           scroller.append(h("article", { class: "card end" }, h("div", { class: "card-body" }, h("blockquote", { class: "verse lg" }, "You reached the end. Amen. 🙏"))));
           break;
         }
-        const card = renderCard(p) as HTMLElement & { passage?: Card };
-        card.passage = p;
-        scroller.append(card);
-        observer.observe(card);
+        await attachClip(p);
+        const { el, play } = renderCard(p);
+        cardData.set(el, { p, play });
+        scroller.append(el);
+        observer.observe(el);
       }
       prune();
     } catch (err) {
@@ -544,17 +727,20 @@ let forYou: Feed | null = null;
 let activeFeed: Feed | null = null;
 
 function mountFeed(feed: Feed) {
+  stage.deactivate();
   view().replaceChildren(feed.el);
   view().className = "is-feed";
   activeFeed = feed;
   const scroller = $(".feed", feed.el);
   scroller.scrollTop = feed.scrollTop;
   scroller.focus({ preventScroll: true });
+  feed.resume();
 }
 
 // ---------- page views ----------
 
-function mountPage(...children: (Node | string)[]) {
+function mountPage(...children: (Node | string | null)[]) {
+  stage.deactivate();
   activeFeed = null;
   view().className = "is-page";
   view().replaceChildren(h("div", { class: "page" }, ...children));
@@ -580,7 +766,7 @@ function booksView() {
         { class: "book-grid" },
         ...index.books
           .filter((b) => b.genre === g)
-          .map((b) => h("a", { class: `book-tile g-${b.genre}`, href: `#/book/${b.id}` }, h("strong", {}, b.name), progressBar(bookSeen(b), bookVerseCount(b)))),
+          .map((b) => h("a", { class: `book-tile g-${b.genre}`, href: `#/book/${b.id}` }, h("strong", {}, b.media ? `${b.name} 🎬` : b.name), progressBar(bookSeen(b), bookVerseCount(b)))),
       ),
     ),
   );
@@ -593,7 +779,7 @@ function bookView(b: BookMeta) {
   const seen = bookSeen(b);
   mountPage(
     h("a", { class: "back", href: "#/books" }, "← Books"),
-    h("div", { class: `book-hero g-${b.genre}` }, h("div", { class: "muted-light" }, `${GENRES[b.genre].emoji} ${GENRES[b.genre].label}`), h("h1", {}, b.name), h("div", {}, `${b.chapters.length} chapters · ${total.toLocaleString()} verses · ${Math.round((seen / total) * 100)}% seen`), progressBar(seen, total)),
+    h("div", { class: `book-hero g-${b.genre}` }, h("div", { class: "muted-light" }, `${GENRES[b.genre].emoji} ${GENRES[b.genre].label}`), h("h1", {}, b.name), h("div", {}, `${b.chapters.length} chapters · ${total.toLocaleString()} verses · ${Math.round((seen / total) * 100)}% seen`), progressBar(seen, total), b.media ? h("div", { class: "muted-light" }, `🎬 Video with narration by ${b.media.narrator}`) : ""),
     h("div", { class: "actions" }, h("a", { class: "btn primary", href: `#/book/${b.id}/play` }, "▶️ Binge in order"), h("a", { class: "btn", href: `#/book/${b.id}/shuffle` }, "🔀 Shuffle this book")),
     h("h2", {}, "Chapters"),
     h("div", { class: "chapter-grid" }, ...b.chapters.map((_, i) => h("a", { href: `#/read/${b.id}/${i + 1}` }, String(i + 1)))),
@@ -673,6 +859,11 @@ async function route() {
     return mountFeed(forYou);
   }
   if (root === "books") return booksView();
+  if (root === "watch") {
+    if (!mediaBooks().length) return go("#/");
+    setTab("watch");
+    return mountFeed(createFeed(watchSource(), { text: `🎬 Narrated: ${mediaBooks().map((b) => b.name).join(", ")}`, back: "#/" }));
+  }
   if (root === "themes") return themesView();
   if (root === "me") return meView();
 
@@ -709,6 +900,12 @@ document.addEventListener("keydown", (ev) => {
     ev.preventDefault();
     scroller.scrollBy({ top: step * scroller.clientHeight, behavior: "smooth" });
   }
+  if (ev.key === " ") {
+    ev.preventDefault();
+    stage.togglePause();
+  }
+  if (ev.key === "m") stage.setMuted(!stage.muted);
+  if (ev.key === "a") toggleAuto();
   if (ev.key === "l") {
     const i = Math.round(scroller.scrollTop / scroller.clientHeight);
     (scroller.children[i]?.querySelector(".like") as HTMLElement | null)?.click();
@@ -725,6 +922,8 @@ async function start() {
   }
   touchStreak();
   renderStats();
+  $("#app").classList.add("muted");
+  if (!mediaBooks().length) $('.tabs a[data-tab="watch"]').remove();
   window.addEventListener("hashchange", route);
   route();
 }
