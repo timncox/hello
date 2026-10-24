@@ -62,16 +62,63 @@ def snap(t: float, resumes: list[float], window: float = 0.8) -> float:
     return min(near, key=lambda r: abs(r - t)) - 0.08 if near else t
 
 
-def align_chapter(model, mp3: Path, verses: list[str]):
+def transcribe(model, audio: np.ndarray, offset: float = 0.0):
+    """ASR words as (normalized word, start, end), times shifted by offset."""
     segments, _ = model.transcribe(
-        decode(mp3), language="en", word_timestamps=True, beam_size=1,
+        audio, language="en", word_timestamps=True, beam_size=1,
         condition_on_previous_text=False, vad_filter=False,
     )
-    asr = []  # (normalized word, start, end)
-    for seg in segments:
-        for w in seg.words or []:
-            for p in asr_norm(w.word):
-                asr.append((p, w.start, w.end))
+    return [(p, w.start + offset, w.end + offset) for seg in segments for w in seg.words or [] for p in asr_norm(w.word)]
+
+
+def match(asr, truth: list[str]):
+    """Times for canonical words found in the transcript (None where missed), and the
+    transcript index matched to the first canonical word."""
+    times: list[float | None] = [None] * len(truth)
+    first = None
+    sm = difflib.SequenceMatcher(None, [a[0] for a in asr], truth, autojunk=False)
+    for a, t, n in sm.get_matching_blocks():
+        for k in range(n):
+            times[t + k] = asr[a + k][1]
+            if t + k == 0:
+                first = a + k
+    return times, first
+
+
+def fill(times: list[float | None], start: float, end: float) -> list[float]:
+    """Interpolate missing times between known neighbours, then keep them monotonic."""
+    known = [i for i, x in enumerate(times) if x is not None]
+    out = list(times)
+    for i, x in enumerate(out):
+        if x is not None:
+            continue
+        prev = max((k for k in known if k < i), default=None)
+        nxt = min((k for k in known if k > i), default=None)
+        lo, lo_i = (times[prev], prev) if prev is not None else (start, -1)
+        hi, hi_i = (times[nxt], nxt) if nxt is not None else (end, len(times))
+        out[i] = lo + (hi - lo) * (i - lo_i) / (hi_i - lo_i)
+    for i in range(1, len(out)):
+        out[i] = max(out[i], out[i - 1])
+    return out
+
+
+def collapsed_runs(times: list[float], min_len: int = 3):
+    """Runs of words squashed onto one timestamp: where the ASR skipped a stretch of audio."""
+    runs, i = [], 0
+    while i < len(times):
+        j = i
+        while j + 1 < len(times) and times[j + 1] - times[j] < 0.02:
+            j += 1
+        if j - i + 1 >= min_len:
+            runs.append((i, j))
+        i = j + 1
+    return runs
+
+
+def align_chapter(model, mp3: Path, verses: list[str]):
+    audio = decode(mp3)
+    duration = len(audio) / 16000
+    asr = transcribe(model, audio)
 
     # Canonical words, remembering which (verse, token) each came from.
     truth, owner = [], []
@@ -81,37 +128,41 @@ def align_chapter(model, mp3: Path, verses: list[str]):
                 truth.append(p)
                 owner.append((vi, ti))
 
-    times: list[float | None] = [None] * len(truth)
-    sm = difflib.SequenceMatcher(None, [a[0] for a in asr], truth, autojunk=False)
-    matched = 0
-    for a, t, n in sm.get_matching_blocks():
-        for k in range(n):
-            times[t + k] = asr[a + k][1]
-            matched += 1
-
-    # Interpolate gaps between known neighbours.
-    known = [i for i, x in enumerate(times) if x is not None]
-    if not known:
+    found, first = match(asr, truth)
+    matched = sum(x is not None for x in found)
+    if not matched:
         raise RuntimeError(f"No words aligned for {mp3}")
-    end_time = asr[-1][2]
-    for i in range(len(times)):
-        if times[i] is not None:
-            continue
-        prev = max((k for k in known if k < i), default=None)
-        nxt = min((k for k in known if k > i), default=None)
-        if prev is None:
-            times[i] = times[nxt]
-        elif nxt is None:
-            times[i] = times[prev] + (end_time - times[prev]) * (i - prev) / (len(times) - prev)
-        else:
-            times[i] = times[prev] + (times[nxt] - times[prev]) * (i - prev) / (nxt - prev)
+    times = fill(found, 0.0, duration)
 
-    # Keep times monotonic (ASR timestamps occasionally wobble).
-    for i in range(1, len(times)):
-        times[i] = max(times[i], times[i - 1])
+    # Whisper occasionally skips a few seconds; re-transcribe just that window.
+    for _ in range(3):
+        runs = collapsed_runs(times)
+        if not runs:
+            break
+        for i, j in runs:
+            ws = times[i - 1] if i > 0 else 0.0
+            later = [t for t in times[j + 1:] if t > times[j] + 0.5]
+            we = min(duration, (later[0] if later else duration) + 1.0)
+            sub, _ = match(transcribe(model, audio[int(ws * 16000):int(we * 16000)], ws), truth[i:j + 1])
+            if any(x is not None for x in sub):
+                times[i:j + 1] = fill(sub, ws, we)
+        times = fill(times, 0.0, duration)
+
+    # The narrator announces "<Book>, chapter N" before verse 1; start after it.
+    resumes = pauses(mp3)
+    if first:
+        announced = asr[first - 1][2]
+        if times[0] < announced:
+            after = [r for r in resumes if announced - 0.05 <= r <= announced + 3]
+            times[0] = (after[0] - 0.08) if after else announced + 0.1
+            times = fill(times, 0.0, duration)
+    # Sometimes the announcement isn't transcribed and the first word is stretched over it.
+    if len(times) > 1 and times[1] - times[0] > 1.0:
+        before = [r for r in resumes if times[0] < r < times[1]]
+        if before:
+            times[0] = before[-1] - 0.08
 
     # First part of each display token gives its start time.
-    resumes = pauses(mp3)
     out = []
     token_start: dict[tuple[int, int], float] = {}
     for (vi, ti), t in zip(owner, times):
@@ -124,7 +175,7 @@ def align_chapter(model, mp3: Path, verses: list[str]):
         starts = [starts[0]] + [max(w, starts[0]) for w in starts[1:]]
         out.append([vi + 1, starts[0], None, starts])
     for i, row in enumerate(out):
-        row[2] = out[i + 1][1] if i + 1 < len(out) else end_time + 0.3
+        row[2] = out[i + 1][1] if i + 1 < len(out) else duration
 
     cs = lambda x: round(x * 100)
     rows = [[v, cs(s), cs(e), [cs(w) for w in ws]] for v, s, e, ws in out]
