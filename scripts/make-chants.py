@@ -2,7 +2,8 @@
 (deeper pitch, bass boost, compression, a sub "boom" on the name), and time every word
 for the pop-up captions.
 
-Input:  src/data/characters.json  (id, chant)
+Input:  src/data/characters.json  (id, name, chant, and optional "say": how the Italian voice
+        should spell the name, e.g. "Gionarino" for "Jonahrino"; captions keep the display name)
 Output: public/brainrot/<id>.mp3  and  public/brainrot/<id>.json  {"duration": cs, "words": [cs...]}
         Word i is the i-th whitespace token of the chant.
 
@@ -119,7 +120,8 @@ def main():
         mp3 = out / f"{c['id']}.mp3"
         with tempfile.TemporaryDirectory() as tmp:
             raw = Path(tmp) / "raw.wav"
-            synth(c["chant"], raw, mp3, tts)
+            spoken = c["chant"].replace(c["name"], c["say"]) if c.get("say") else c["chant"]
+            synth(spoken, raw, mp3, tts)
             words = word_times(asr, raw, c["chant"])
         duration = len(align.decode(mp3)) / 16000
         cs = lambda x: round(x * 100)

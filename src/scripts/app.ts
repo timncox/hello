@@ -459,7 +459,7 @@ stage.onMutedChange = (muted) => {
 };
 
 stage.onEnd = () => {
-  if (!autoScroll || !activeFeed) return false;
+  if (!activeFeed || !(autoScroll || activeFeed.continuous)) return false;
   const scroller = $(".feed", activeFeed.el);
   scroller.scrollBy({ top: scroller.clientHeight, behavior: "smooth" });
   return true;
@@ -609,7 +609,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     { class: "rail" },
     likeBtn,
     h("a", { class: "act", href: `#/read/${b.id}/${p.c}/${p.v}`, "aria-label": "Read in context" }, h("span", {}, "📖"), h("small", {}, "Context")),
-    h("a", { class: "act", href: `#/book/${b.id}/play/${p.c}/${p.v}`, "aria-label": "Keep reading from here" }, h("span", {}, "▶️"), h("small", {}, "Binge")),
+    h("a", { class: "act", href: `#/book/${b.id}/play/${p.c}/${p.v}`, "aria-label": "Keep going from here" }, h("span", {}, "▶️"), h("small", {}, "Keep going")),
     shareBtn,
     soundBtn,
     autoBtn,
@@ -699,6 +699,8 @@ interface Feed {
   scrollTop: number;
   /** Start playing whichever card is on screen. */
   resume: () => void;
+  /** Move on to the next card by itself when one finishes (reading a chapter in order). */
+  continuous?: boolean;
 }
 
 const cardData = new WeakMap<Element, { p: Card; play: Playable }>();
@@ -724,11 +726,12 @@ async function attachParts(p: Card) {
   if (parts.length) p.parts = parts;
 }
 
-function createFeed(source: Source, label?: { text: string; back: string }): Feed {
+function createFeed(source: Source, label?: { text: string; back: string }, continuous = false): Feed {
   const scroller = h("div", { class: "feed", tabindex: "0" });
   const feed: Feed = {
     el: h("div", { class: "feed-wrap" }),
     scrollTop: 0,
+    continuous,
     resume() {
       const i = Math.round(scroller.scrollTop / (scroller.clientHeight || 1));
       const data = scroller.children[i] && cardData.get(scroller.children[i]);
@@ -866,7 +869,7 @@ function bookView(b: BookMeta) {
   mountPage(
     h("a", { class: "back", href: "#/books" }, "← Books"),
     h("div", { class: `book-hero g-${b.genre}` }, h("div", { class: "muted-light" }, `${GENRES[b.genre].emoji} ${GENRES[b.genre].label}`), h("h1", {}, b.name), h("div", {}, `${b.chapters.length} chapters · ${total.toLocaleString()} verses · ${Math.round((seen / total) * 100)}% seen`), progressBar(seen, total), b.media ? h("div", { class: "muted-light" }, `🎙 ${b.media.chapters.length === b.chapters.length ? "Narrated" : `${b.media.chapters.length} narrated chapter${b.media.chapters.length > 1 ? "s" : ""}`}, read by ${b.media.narrator}`) : ""),
-    h("div", { class: "actions" }, h("a", { class: "btn primary", href: `#/book/${b.id}/play` }, "▶️ Binge in order"), h("a", { class: "btn", href: `#/book/${b.id}/shuffle` }, "🔀 Shuffle this book")),
+    h("div", { class: "actions" }, h("a", { class: "btn primary", href: `#/book/${b.id}/play` }, "▶️ Play in order"), h("a", { class: "btn", href: `#/book/${b.id}/shuffle` }, "🔀 Shuffle this book")),
     h("h2", {}, "Chapters"),
     h("div", { class: "chapter-grid" }, ...b.chapters.map((_, i) => h("a", { href: `#/read/${b.id}/${i + 1}` }, String(i + 1)))),
   );
@@ -882,12 +885,13 @@ async function readerView(b: BookMeta, c: number, v?: number) {
     "div",
     { class: "reader-nav" },
     c > 1 ? h("a", { class: "btn", href: `#/read/${b.id}/${c - 1}` }, "← Prev") : h("span", {}),
-    h("a", { class: "btn primary", href: `#/book/${b.id}/play/${c}/1` }, "▶️ Binge from here"),
+    h("a", { class: "btn primary", href: `#/book/${b.id}/play/${c}/1` }, b.media?.chapters.includes(c) ? "🎧 Listen" : "▶️ Scroll it"),
     c < chapters.length ? h("a", { class: "btn", href: `#/read/${b.id}/${c + 1}` }, "Next →") : h("span", {}),
   );
   mountPage(
     h("a", { class: "back", href: `#/book/${b.id}` }, `← ${b.name}`),
     h("h1", {}, `${b.name} ${c}`),
+    b.media?.chapters.includes(c) ? h("a", { class: "btn primary", href: `#/book/${b.id}/play/${c}/${v ?? 1}` }, v ? `🎧 Listen from verse ${v}` : "🎧 Listen to this chapter") : "",
     h("div", { class: "reader" }, ...verses),
     nav,
     h("p", { class: "muted small" }, `${index.translation.name} (${index.translation.id})`),
@@ -976,8 +980,8 @@ async function route() {
   if (root === "book" && book) {
     if (a === "play") {
       setTab("books");
-      const label = b ? `▶️ ${book.name} from ${b}:${c ?? 1}` : `▶️ ${book.name} in order`;
-      return mountFeed(createFeed(sequentialSource(book, Number(b) || 1, Number(c) || 1), { text: label, back: `#/book/${book.id}` }));
+      const label = b ? `▶️ ${book.name} ${b}:${c ?? 1} and on` : `▶️ ${book.name} in order`;
+      return mountFeed(createFeed(sequentialSource(book, Number(b) || 1, Number(c) || 1), { text: label, back: `#/read/${book.id}/${Number(b) || 1}` }, true));
     }
     if (a === "shuffle") {
       setTab("books");

@@ -81,7 +81,7 @@ Adding narration for a book (BSB audio is CC0, from openbible.com/audio/souer/BS
 4. `npm run bible` so index.json lists the narrated chapters; their cards then play as video.
 
 Adding a brainrot character:
-1. Add an entry to `src/data/characters.json`. Name: pseudo-Italian, rhyming, about the story (never a copy of an existing meme character). Chant: short, Italian, and accurate to the passage. Refs: verses from that story, ideally in narrated chapters.
+1. Add an entry to `src/data/characters.json`. Name: on the nose, English-recognizable words with Italian endings that say who and what (Jonahrino Whalerino, Froggo Pharaoggo), never a copy of an existing meme character. `say`: the same name spelled so the Italian voice pronounces it right (Gionarino Uèilerino). Chant: short, Italian, and accurate to the passage. Refs: verses from that story, ideally in narrated chapters.
 2. Generate art from the entry's `prompt` (vertical, "surreal hyperrealistic 3D render, Italian brainrot meme style, no text"), save as `public/brainrot/<id>.jpg` at 720x1280.
 3. `python scripts/make-chants.py --only <id>`, narrate its chapters (above), then `npm run bible`.
 - God and Jesus are never turned into mascots; characters are people, animals, creatures and objects from the stories.
