@@ -1,9 +1,11 @@
 // Video cards: narration playback, word-synced captions, and export to a real video file.
 // A card's "video" is assembled live from parts played back to back: e.g. a brainrot
 // character's chant, then the verse in the human narration (scripts/align-audio.py), over
-// either a motion background (motion.ts) or the character's art.
+// either a motion background (motion.ts) or the character's art. Split-screen cards add an
+// oddly-satisfying loop underneath (satisfying.ts) that moves on every spoken word.
 
 import { drawScene, type Genre } from "./motion";
+import { drawVibe, type Vibe } from "./satisfying";
 
 export interface Clip {
   src: string;
@@ -176,6 +178,22 @@ export interface Playable {
   progress: HTMLElement;
   /** Plain text shown on text-only cards (used for export). */
   text: string;
+  /** Split screen: satisfying loop in the bottom panel, beats = word times on the card timeline. */
+  vibe?: { canvas: HTMLCanvasElement; kind: Vibe; hue: number; beats: number[] };
+}
+
+/** Fraction of the card height given to the top (content) half of a split screen. */
+export const SPLIT = 0.56;
+
+/** Word times on the card timeline; text-only cards get a steady reading pulse. */
+export function beatsFor(parts: Part[], text: string) {
+  if (!parts.length) return text.split(/\s+/).map((_, i) => 0.6 + i * 0.3);
+  return parts.flatMap((p) => p.clip.words.map((w) => p.at + (w.t - p.clip.start)));
+}
+
+function drawVibeOn(canvas: HTMLCanvasElement, p: Playable, t: number) {
+  if (!p.vibe || !fitCanvas(canvas)) return;
+  drawVibe(canvas.getContext("2d")!, canvas.width, canvas.height, t, p.vibe.beats, p.vibe.kind, p.seed, p.vibe.hue);
 }
 
 const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -193,6 +211,7 @@ export function fitCanvas(canvas: HTMLCanvasElement) {
 }
 
 export function drawStill(p: Playable) {
+  if (p.vibe) drawVibeOn(p.vibe.canvas, p, 0);
   if (!p.canvas || !fitCanvas(p.canvas)) return;
   drawScene(p.canvas.getContext("2d")!, p.canvas.width, p.canvas.height, p.seed * 37, p.genre, p.seed);
 }
@@ -380,6 +399,7 @@ export class Stage {
     if (p.canvas && fitCanvas(p.canvas)) {
       drawScene(p.canvas.getContext("2d")!, p.canvas.width, p.canvas.height, reduceMotion() ? p.seed * 37 : this.sceneT, p.genre, p.seed);
     }
+    if (p.vibe) drawVibeOn(p.vibe.canvas, p, this.elapsed);
     if (p.captions?.update(this.elapsed) && p.image) punch(p.image, phase === "chant");
     p.progress.style.transform = `scaleX(${Math.min(1, this.elapsed / p.duration)})`;
   };
@@ -448,11 +468,29 @@ function outlined(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
   ctx.fillText(text, x, y);
 }
 
-function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, scale: number, dx: number, dy: number) {
-  const s = Math.max(W / img.naturalWidth, H / img.naturalHeight) * scale;
+function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, boxH: number, scale: number, dx: number, dy: number) {
+  const s = Math.max(W / img.naturalWidth, boxH / img.naturalHeight) * scale;
   const w = img.naturalWidth * s;
   const h = img.naturalHeight * s;
-  ctx.drawImage(img, (W - w) / 2 + dx, (H - h) / 2 + dy, w, h);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, W, boxH);
+  ctx.clip();
+  ctx.drawImage(img, (W - w) / 2 + dx, (boxH - h) * 0.45 + dy, w, h);
+  ctx.restore();
+}
+
+/** Bottom panel of a split-screen frame. */
+function drawVibePanel(ctx: CanvasRenderingContext2D, p: Playable, t: number) {
+  if (!p.vibe) return;
+  const top = Math.round(H * SPLIT);
+  ctx.save();
+  ctx.translate(0, top);
+  ctx.beginPath();
+  ctx.rect(0, 0, W, H - top);
+  ctx.clip();
+  drawVibe(ctx, W, H - top, t, p.vibe.beats, p.vibe.kind, p.seed, p.vibe.hue);
+  ctx.restore();
 }
 
 /** Brainrot frame: character art with punch zooms, big outlined pop captions. */
@@ -463,15 +501,17 @@ function drawBrainrotFrame(ctx: CanvasRenderingContext2D, p: Playable, meta: Vid
   const chanting = hit?.part.kind === "chant";
   const kick = Math.max(0, 1 - sinceWord / (chanting ? 0.22 : 0.18)) * (chanting ? 0.1 : 0.04);
   const shake = chanting && sinceWord < 0.15 ? 7 : 0;
+  const imgH = p.vibe ? H * SPLIT : H;
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, W, H);
-  drawCover(ctx, p.image!, 1.04 + (0.06 * t) / p.duration + kick, Math.sin(t * 60) * shake, Math.cos(t * 47) * shake);
+  drawCover(ctx, p.image!, imgH, 1.04 + (0.06 * t) / p.duration + kick, Math.sin(t * 60) * shake, Math.cos(t * 47) * shake);
+  drawVibePanel(ctx, p, t);
 
-  const shade = ctx.createLinearGradient(0, H * 0.45, 0, H);
+  const shade = ctx.createLinearGradient(0, imgH * 0.6, 0, imgH);
   shade.addColorStop(0, "rgba(0,0,0,0)");
-  shade.addColorStop(1, "rgba(0,0,0,0.7)");
+  shade.addColorStop(1, "rgba(0,0,0,0.6)");
   ctx.fillStyle = shade;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, W, imgH);
 
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
@@ -488,7 +528,7 @@ function drawBrainrotFrame(ctx: CanvasRenderingContext2D, p: Playable, meta: Vid
       const pop = layout(ctx, words, (s) => `${s}px ${POP_FONT}`, chanting ? 96 : 84, W - 90, 340, 1.08);
       const ageChunk = hit.fileT - hit.part.clip.words[chunk[0]].t;
       const scale = ageChunk < 0.1 ? 0.6 + ageChunk * 5 : ageChunk < 0.2 ? 1.1 - (ageChunk - 0.1) : 1;
-      const cy = H * 0.66 - (pop.lines.length * pop.lineH) / 2;
+      const cy = (p.vibe ? H * SPLIT - 40 : H * 0.66) - (pop.lines.length * pop.lineH) / 2;
       ctx.save();
       ctx.translate(W / 2, cy + (pop.lines.length * pop.lineH) / 2);
       ctx.scale(scale, scale);
@@ -522,13 +562,15 @@ function drawBrainrotFrame(ctx: CanvasRenderingContext2D, p: Playable, meta: Vid
 /** Classic frame: motion background, full passage with the spoken word highlighted. */
 function drawFrame(ctx: CanvasRenderingContext2D, p: Playable, words: string[], meta: VideoMeta, elapsed: number) {
   drawScene(ctx, W, H, p.seed * 37 + elapsed, p.genre, p.seed);
+  drawVibePanel(ctx, p, elapsed);
   const pad = 64;
   const chars = words.join(" ").length;
   const serif = (s: number) => `500 ${s}px Georgia, "Times New Roman", serif`;
-  const { size, lineH, lines } = layout(ctx, words, serif, chars < 90 ? 66 : chars < 170 ? 56 : chars < 320 ? 46 : 38, W - pad * 2, H * 0.56);
+  const area = p.vibe ? H * SPLIT - 250 : H * 0.56;
+  const { size, lineH, lines } = layout(ctx, words, serif, chars < 90 ? 62 : chars < 170 ? 52 : chars < 320 ? 42 : 34, W - pad * 2, area);
   const part = p.parts[0];
   const now = part ? wordAt(part.clip, part.clip.start + elapsed - part.at) : words.length;
-  const top = H * 0.46 - (lines.length * lineH) / 2;
+  const top = (p.vibe ? H * SPLIT * 0.52 : H * 0.46) - (lines.length * lineH) / 2;
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
@@ -549,7 +591,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, p: Playable, words: string[], 
     }
   });
 
-  const refY = top + lines.length * lineH + 70;
+  const refY = top + lines.length * lineH + (p.vibe ? 56 : 70);
   ctx.font = `800 36px system-ui, -apple-system, "Segoe UI", sans-serif`;
   ctx.fillStyle = "#fff";
   ctx.fillText(meta.ref, pad, refY);
@@ -568,7 +610,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, p: Playable, words: string[], 
   ctx.fillText(meta.site, pad, 110);
   ctx.font = `600 24px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.fillText(meta.credit, pad, H - 80);
+  ctx.fillText(meta.credit, pad, H - 40);
 
   ctx.fillStyle = "rgba(255,255,255,0.25)";
   ctx.fillRect(0, H - 8, W, 8);

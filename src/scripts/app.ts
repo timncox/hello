@@ -4,7 +4,8 @@
 // open with a chant before the verse (see video.ts).
 
 import type { Genre } from "./motion";
-import { Stage, loadClip, karaoke, popCaptions, drawStill, renderVideo, canExportVideo, type Part, type Playable } from "./video";
+import { Stage, loadClip, karaoke, popCaptions, drawStill, renderVideo, canExportVideo, beatsFor, type Part, type Playable } from "./video";
+import { VIBES, type Vibe } from "./satisfying";
 
 interface BookMeta {
   id: string;
@@ -471,6 +472,27 @@ function toggleAuto() {
   toast(autoScroll ? "⏩ Auto-scroll on: sit back" : "Auto-scroll off");
 }
 
+let vibesOn = store.get("vibes", true);
+let lastVibe: Vibe | null = null;
+function pickVibe(): Vibe {
+  const v = pick(VIBES.filter((x) => x !== lastVibe));
+  lastVibe = v;
+  return v;
+}
+
+/** Shrink a split card's passage until it fits the top half. */
+function fitText(card: Element) {
+  if (!card.classList.contains("split") || card.classList.contains("brainrot")) return;
+  const body = card.querySelector<HTMLElement>(".card-body");
+  const verse = body?.querySelector<HTMLElement>(".verse");
+  if (!body || !verse) return;
+  let size = parseFloat(getComputedStyle(verse).fontSize);
+  while (body.scrollHeight > body.clientHeight + 1 && size > 13) {
+    size -= 1;
+    verse.style.fontSize = `${size}px`;
+  }
+}
+
 const readingTime = (text: string) => Math.max(4, text.split(/\s+/).length * 0.3 + 1.5);
 
 // ---------- share sheet & video export ----------
@@ -592,7 +614,9 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     soundBtn,
     autoBtn,
   );
-  const overlay = [pill, h("div", { class: "pause-icon", "aria-hidden": "true" }, "▶"), h("div", { class: "playbar" }, progress)];
+  const vibeCanvas = vibesOn ? (h("canvas", { class: "vibe", "aria-hidden": "true" }) as HTMLCanvasElement) : null;
+  const overlay = [vibeCanvas, pill, h("div", { class: "pause-icon", "aria-hidden": "true" }, "▶"), h("div", { class: "playbar" }, progress)];
+  const split = vibeCanvas ? " split" : "";
 
   let card: HTMLElement;
   let canvas: HTMLCanvasElement | undefined;
@@ -605,7 +629,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     captions = popCaptions(p.parts);
     card = h(
       "article",
-      { class: "card brainrot video", "data-key": keyOf(p) },
+      { class: `card brainrot video${split}`, "data-key": keyOf(p) },
       h("div", { class: "char-frame" }, image),
       h("div", { class: "char-name" }, p.char.name),
       captions.el,
@@ -624,7 +648,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
           : null;
     card = h(
       "article",
-      { class: `card g-${b.genre}${isVideo ? " video" : ""}`, "data-key": keyOf(p) },
+      { class: `card g-${b.genre}${isVideo ? " video" : ""}${split}`, "data-key": keyOf(p) },
       canvas,
       h("div", { class: "card-body" }, badge, captions?.el ?? h("blockquote", { class: `verse ${sizeClass(p.text)}` }, p.text), ref, credit, chips),
       rail,
@@ -645,6 +669,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     captions,
     progress,
     text: p.text,
+    vibe: vibeCanvas ? { canvas: vibeCanvas, kind: pickVibe(), hue: Math.random() * 360, beats: beatsFor(p.parts ?? [], p.text) } : undefined,
   };
 
   // Single tap pauses, double tap likes.
@@ -727,6 +752,7 @@ function createFeed(source: Source, label?: { text: string; back: string }): Fee
         if (!data) continue;
         if (en.isIntersecting && !drawn.has(en.target)) {
           drawn.add(en.target);
+          fitText(en.target);
           drawStill(data.play);
         }
         if (en.intersectionRatio < 0.6) continue;
@@ -878,6 +904,17 @@ function themesView() {
   );
 }
 
+function vibesToggle() {
+  const btn = h("button", { class: `btn${vibesOn ? " primary" : ""}` }, vibesOn ? "🌀 Satisfying split-screen: on" : "🌀 Satisfying split-screen: off");
+  btn.addEventListener("click", () => {
+    vibesOn = !vibesOn;
+    store.set("vibes", vibesOn);
+    forYou = null; // rebuild the feed with the new layout
+    meView();
+  });
+  return h("p", {}, btn);
+}
+
 function meView() {
   setTab("me");
   const seen = countSeen();
@@ -896,6 +933,7 @@ function meView() {
     ),
     h("p", {}, `You've seen ${seen.toLocaleString()} of ${total.toLocaleString()} verses (${((seen / total) * 100).toFixed(1)}%). Gotta read 'em all.`),
     progressBar(seen, total),
+    vibesToggle(),
     h("h2", {}, "Liked"),
     ...(liked.length ? liked : [h("p", { class: "muted" }, "Double-tap a card or hit ❤️ to save it here.")]),
   );
