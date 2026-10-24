@@ -67,18 +67,17 @@ src/data/themes.json       # curated themes: references only, e.g. "Romans 8:38-
 scripts/build-bible.mjs    # `npm run bible`: regenerates public/bible/ from the source text + themes.json
 public/bible/              # generated: index.json, themes.json, books/<id>.json (don't hand-edit)
 src/data/characters.json   # brainrot characters: id, name, Italian chant, art prompt, verse refs
-scripts/fetch-audio.py     # download + re-encode BSB narration for chapters
+scripts/narrate.py         # time every word of the BSB narration for whole books (audio is streamed, not stored)
 scripts/align-audio.py     # word-level timing for narrated chapters (faster-whisper + alignment to BSB text)
 scripts/make-chants.py     # synthesize + time each character's chant (Piper Italian TTS)
 public/brainrot/           # <id>.jpg art (720x1280), <id>.mp3 chant, <id>.json chant word timings
-public/media/<book>/       # narration: <cc>.mp3 (40 kbps mono) + <chapter>.json word timings
+public/media/<book>/       # <chapter>.json word timings; "audio" is /audio/... which astro.config.mjs proxies to openbible.com
 ```
 
-Adding narration for a book (BSB audio is CC0, from openbible.com/audio/souer/BSB_<nn>_<Abc>_<ccc>.mp3):
+Adding narration for a book (BSB audio is CC0, streamed from openbible.com/audio/souer/BSB_<nn>_<Abc>_<ccc>.mp3 through the site's /audio proxy):
 1. `pip install faster-whisper piper-tts`
-2. `python scripts/fetch-audio.py <book> <chapters>` (e.g. `jonah 1-4`)
-3. `python scripts/align-audio.py <book> public/media/<book> --narrator "Bob Souer" --chapters <chapters>`
-4. `npm run bible` so index.json lists the narrated chapters; their cards then play as video.
+2. `python scripts/narrate.py <book> [<book> ...]` (skips chapters already done; `--chapters 1-4` for part of a book)
+3. `npm run bible` so index.json lists the narrated chapters; their cards then play as video.
 
 Adding a brainrot character:
 1. Add an entry to `src/data/characters.json`. Name: on the nose, English-recognizable words with Italian endings that say who and what (Jonahrino Whalerino, Froggo Pharaoggo), never a copy of an existing meme character. `say`: the same name spelled so the Italian voice pronounces it right (Gionarino Uèilerino). Chant: short, Italian, and accurate to the passage. Refs: verses from that story, ideally in narrated chapters.

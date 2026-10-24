@@ -58,7 +58,7 @@ export async function loadClip(book: string, c: number, v: number, e: number, ch
   if (/^[a-z]/.test(first.w)) first.w = `…${first.w}`;
   if (!SENTENCE_END.test(last.w)) last.w = `${last.w.replace(/[,;:—]$/, "")}…`;
   return {
-    src: `/media/${media.audio}`,
+    src: media.audio.startsWith("/") ? media.audio : `/media/${media.audio}`, // streamed (/audio/...) or local
     start: rows[0][1] / 100,
     end: rows[rows.length - 1][2] / 100,
     words,
