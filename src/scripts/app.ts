@@ -451,7 +451,7 @@ function heartBurst(card: HTMLElement, x: number, y: number) {
 // ---------- playback ----------
 
 const stage = new Stage();
-let autoScroll = store.get("auto", false);
+let autoScroll = store.get("autoplay", true); // on by default; hold a card to stop and loop it
 
 stage.onMutedChange = (muted) => {
   $("#app").classList.toggle("muted", muted);
@@ -459,18 +459,26 @@ stage.onMutedChange = (muted) => {
 };
 
 stage.onEnd = () => {
-  if (!activeFeed || !(autoScroll || activeFeed.continuous)) return false;
+  if (!activeFeed || !(autoScroll || activeFeed.continuous)) {
+    stage.current?.card.classList.add("looping");
+    return false;
+  }
   const scroller = $(".feed", activeFeed.el);
   scroller.scrollBy({ top: scroller.clientHeight, behavior: "smooth" });
   return true;
 };
 
-function toggleAuto() {
-  autoScroll = !autoScroll;
-  store.set("auto", autoScroll);
-  document.querySelectorAll(".act.auto").forEach((el) => el.classList.toggle("on", autoScroll));
-  toast(autoScroll ? "⏩ Auto-scroll on: sit back" : "Auto-scroll off");
+function setAuto(on: boolean, message?: string) {
+  autoScroll = on;
+  store.set("autoplay", on);
+  if (!on && activeFeed) activeFeed.continuous = false;
+  document.querySelectorAll(".act.auto").forEach((el) => el.classList.toggle("on", on));
+  document.querySelectorAll(".card.looping").forEach((el) => el.classList.remove("looping"));
+  if (!on) stage.current?.card.classList.add("looping");
+  toast(message ?? (on ? "⏩ Autoplay on" : "🔁 Autoplay off: cards loop"));
 }
+
+const toggleAuto = () => setAuto(!autoScroll);
 
 let vibesOn = store.get("vibes", true);
 let lastVibe: Vibe | null = null;
@@ -493,7 +501,8 @@ function fitText(card: Element) {
   }
 }
 
-const readingTime = (text: string) => Math.max(4, text.split(/\s+/).length * 0.3 + 1.5);
+// Text cards advance at a relaxed reading pace.
+const readingTime = (text: string) => Math.max(5, text.split(/\s+/).length * 0.36 + 2);
 
 // ---------- share sheet & video export ----------
 
@@ -672,10 +681,40 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     vibe: vibeCanvas ? { canvas: vibeCanvas, kind: pickVibe(), hue: Math.random() * 360, beats: beatsFor(p.parts ?? [], p.text) } : undefined,
   };
 
+  // Hold: stop autoplay and loop this verse (hold again to resume).
+  let holdTimer = 0;
+  let held = false;
+  let startX = 0;
+  let startY = 0;
+  const cancelHold = () => clearTimeout(holdTimer);
+  card.addEventListener("pointerdown", (ev) => {
+    if ((ev.target as HTMLElement).closest("a,button")) return;
+    held = false;
+    startX = ev.clientX;
+    startY = ev.clientY;
+    holdTimer = window.setTimeout(() => {
+      held = true;
+      navigator.vibrate?.(30);
+      if (autoScroll) setAuto(false, "🔁 Looping this verse. Hold again for autoplay");
+      else setAuto(true, "⏩ Autoplay on");
+      if (stage.current === play && stage.paused) stage.togglePause();
+    }, 450);
+  });
+  card.addEventListener("pointermove", (ev) => {
+    if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > 10) cancelHold();
+  });
+  card.addEventListener("pointerup", cancelHold);
+  card.addEventListener("pointercancel", cancelHold);
+  card.addEventListener("contextmenu", (ev) => ev.preventDefault());
+
   // Single tap pauses, double tap likes.
   let tapTimer = 0;
   card.addEventListener("click", (ev) => {
     if ((ev.target as HTMLElement).closest("a,button")) return;
+    if (held) {
+      held = false;
+      return;
+    }
     if (tapTimer) {
       clearTimeout(tapTimer);
       tapTimer = 0;

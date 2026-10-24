@@ -153,6 +153,13 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .playbar { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,0.15); }
 .playbar > div { height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); }
 
+.card { -webkit-touch-callout: none; }
+.card.looping::before {
+  content: "🔁 Looping"; position: absolute; z-index: 4; left: 16px; bottom: 14px;
+  font-size: 0.75rem; font-weight: 800; color: #fff; background: rgba(0,0,0,0.5);
+  padding: 0.25rem 0.55rem; border-radius: 999px; pointer-events: none;
+}
+.card.split.looping::before { bottom: auto; top: calc(56% + 0.6rem); }
 .act.auto span { filter: grayscale(1) brightness(1.4); }
 .act.auto.on span { filter: none; background: var(--accent); }
 

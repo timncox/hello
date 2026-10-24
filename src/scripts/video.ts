@@ -270,7 +270,7 @@ export class Stage {
     cancelAnimationFrame(this.raf);
     this.audio.pause();
     this.partIdx = -1;
-    p.card.classList.remove("active", "paused");
+    p.card.classList.remove("active", "paused", "looping");
     delete p.card.dataset.phase;
     this.phase = "";
     p.captions?.update(null);
