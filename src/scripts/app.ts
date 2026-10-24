@@ -1,9 +1,10 @@
 // Scrollture client app: infinite scripture feed + book/theme drill-down.
 // Vanilla TS, hash-routed, data lazy-loaded from /bible (see scripts/build-bible.mjs).
-// Books with narration in /media play as video cards (see video.ts).
+// Narrated chapters in /media play as video cards; brainrot characters (src/data/characters.json)
+// open with a chant before the verse (see video.ts).
 
 import type { Genre } from "./motion";
-import { Stage, loadClip, captionEl, drawStill, renderVideo, canExportVideo, type Clip, type Playable } from "./video";
+import { Stage, loadClip, karaoke, popCaptions, drawStill, renderVideo, canExportVideo, type Part, type Playable } from "./video";
 
 interface BookMeta {
   id: string;
@@ -11,7 +12,7 @@ interface BookMeta {
   refName: string;
   genre: Genre;
   chapters: number[];
-  media?: { narrator: string };
+  media?: { narrator: string; chapters: number[] };
 }
 
 interface Index {
@@ -28,6 +29,17 @@ interface Passage {
   text: string;
 }
 
+interface Character {
+  id: string;
+  name: string;
+  chant: string;
+  image: string;
+  audio: string;
+  chantDuration: number; // centiseconds
+  chantWords: number[]; // centiseconds, one per whitespace token of chant
+  passages: Passage[];
+}
+
 interface Theme {
   id: string;
   name: string;
@@ -35,11 +47,12 @@ interface Theme {
   passages: Passage[];
 }
 
-type Kind = "banger" | "deep" | "rare" | "seq";
+type Kind = "banger" | "deep" | "rare" | "seq" | "brainrot";
 interface Card extends Passage {
   kind: Kind;
   theme?: string;
-  clip?: Clip;
+  char?: Character;
+  parts?: Part[];
 }
 
 interface Liked extends Passage {
@@ -66,17 +79,20 @@ const RARE_BOOK_VERSES = 60;
 
 let index: Index;
 let themes: Theme[];
+let characters: Character[] = [];
 const bookById = new Map<string, BookMeta>();
 const bookOffset = new Map<string, number[]>(); // per chapter, global verse offset
 const bookCache = new Map<string, Promise<string[][]>>();
 
 async function loadIndex() {
-  const [i, t] = await Promise.all([
+  const [i, t, c] = await Promise.all([
     fetch("/bible/index.json").then((r) => r.json() as Promise<Index>),
     fetch("/bible/themes.json").then((r) => r.json() as Promise<Theme[]>),
+    fetch("/bible/characters.json").then((r) => (r.ok ? (r.json() as Promise<Character[]>) : [])),
   ]);
   index = i;
   themes = t;
+  characters = c;
   let offset = 0;
   for (const b of index.books) {
     bookById.set(b.id, b);
@@ -237,10 +253,10 @@ function passageText(chapter: string[], s: number, e: number) {
   return text;
 }
 
-async function randomFromBook(b: BookMeta): Promise<Card> {
+async function randomFromBook(b: BookMeta, onlyChapters?: number[]): Promise<Card> {
   const chapters = await loadBook(b.id);
   for (;;) {
-    const ci = rand(chapters.length);
+    const ci = onlyChapters ? pick(onlyChapters) - 1 : rand(chapters.length);
     const vi = rand(chapters[ci].length);
     if (!chapters[ci][vi]) continue;
     const [s, e] = chunkAround(chapters[ci], vi);
@@ -276,9 +292,11 @@ function forYouSource(): Source {
   return async () => {
     for (let tries = 0; tries < 10; tries++) {
       let card: Card;
-      const narrated = mediaBooks();
-      if (narrated.length && Math.random() < 0.3) {
-        card = await randomFromBook(pick(narrated));
+      const roll = Math.random();
+      if (characters.length && roll < 0.2) {
+        card = brainrotCard();
+      } else if (mediaBooks().length && roll < 0.4) {
+        card = await randomNarrated();
       } else if (Math.random() < 0.45) {
         const pool = likedThemes();
         const theme = pool.length && Math.random() < 0.4 ? pick(pool) : pick(themes);
@@ -309,17 +327,22 @@ function bookShuffleSource(b: BookMeta): Source {
 
 const mediaBooks = () => index.books.filter((b) => b.media);
 
-/** Video-only feed: narrated passages, half the time a curated one. */
-function watchSource(): Source {
-  return async () => {
-    const narrated = new Set(mediaBooks().map((b) => b.id));
-    const bangers = themes.flatMap((t) => t.passages.filter((p) => narrated.has(p.b)).map((p) => ({ p, theme: t.id })));
-    if (bangers.length && Math.random() < 0.5) {
-      const { p, theme } = pick(bangers);
-      return { ...p, kind: "banger", theme };
-    }
-    return randomFromBook(pick(mediaBooks()));
-  };
+function randomNarrated(): Promise<Card> {
+  const b = pick(mediaBooks());
+  return randomFromBook(b, b.media!.chapters);
+}
+
+let lastCharacter = "";
+function brainrotCard(): Card {
+  const pool = characters.length > 1 ? characters.filter((c) => c.id !== lastCharacter) : characters;
+  const char = pick(pool);
+  lastCharacter = char.id;
+  return { ...pick(char.passages), kind: "brainrot", char };
+}
+
+/** Video-only feed: mostly brainrot characters, mixed with narrated passages. */
+function brainrotSource(): Source {
+  return async () => (characters.length && (Math.random() < 0.7 || !mediaBooks().length) ? brainrotCard() : randomNarrated());
 }
 
 /** In-order reading that rolls into the next book when one ends. */
@@ -394,6 +417,7 @@ function sizeClass(text: string) {
 }
 
 const BADGES: Record<Kind, string> = {
+  brainrot: "",
   banger: "🔥 BANGER",
   deep: "🪨 DEEP CUT",
   rare: "🦄 RARE DROP",
@@ -492,7 +516,7 @@ async function exportSheet(p: Card, play: Playable) {
   const meta = {
     ref: refOf(p),
     translation: index.translation.id,
-    credit: play.clip ? `🎙 Read by ${play.clip.narrator} · ${index.translation.license}` : `${index.translation.name} · ${index.translation.license}`,
+    credit: versePart(p) ? `🎙 ${p.char ? "Verse read" : "Read"} by ${versePart(p)!.clip.narrator} · ${index.translation.license}` : `${index.translation.name} · ${index.translation.license}`,
     site: $(".logo").textContent ?? "",
     accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#ff2e63",
   };
@@ -513,9 +537,13 @@ async function exportSheet(p: Card, play: Playable) {
 
 // ---------- cards ----------
 
+const versePart = (p: Card) => p.parts?.find((x) => x.kind === "verse");
+
 function renderCard(p: Card): { el: HTMLElement; play: Playable } {
   const b = bookById.get(p.b)!;
   const theme = p.theme ? themes.find((t) => t.id === p.theme) : undefined;
+  const verse = versePart(p);
+  const isVideo = !!p.parts?.length;
   const likeBtn = h("button", { class: "act like", "aria-label": "Like" }, h("span", {}, "❤️"), h("small", {}, "Like"));
   const sync = () => likeBtn.classList.toggle("on", isLiked(p));
   sync();
@@ -535,67 +563,88 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
   const shareBtn = h("button", { class: "act", "aria-label": "Share" }, h("span", {}, "📤"), h("small", {}, "Share"));
   shareBtn.addEventListener("click", () => shareSheet(p, play));
 
-  const soundBtn = p.clip ? h("button", { class: "act sound", "aria-label": "Sound on/off" }, h("span", {}, stage.muted ? "🔇" : "🔊"), h("small", {}, "Sound")) : null;
+  const soundBtn = isVideo ? h("button", { class: "act sound", "aria-label": "Sound on/off" }, h("span", {}, stage.muted ? "🔇" : "🔊"), h("small", {}, "Sound")) : null;
   soundBtn?.addEventListener("click", () => stage.setMuted(!stage.muted));
 
   const autoBtn = h("button", { class: `act auto${autoScroll ? " on" : ""}`, "aria-label": "Auto-scroll" }, h("span", {}, "⏩"), h("small", {}, "Auto"));
   autoBtn.addEventListener("click", toggleAuto);
 
-  const pill = p.clip ? h("button", { class: "sound-pill" }, "🔇 Tap for sound") : null;
+  const pill = isVideo ? h("button", { class: "sound-pill" }, "🔇 Tap for sound") : null;
   pill?.addEventListener("click", () => stage.setMuted(false));
 
-  const canvas = h("canvas", { class: "bg", "aria-hidden": "true" }) as HTMLCanvasElement;
-  const caption = p.clip ? captionEl(p.clip, `verse ${sizeClass(p.text)}`) : h("blockquote", { class: `verse ${sizeClass(p.text)}` }, p.text);
   const progress = h("div", {});
-  const badge =
-    p.theme === "wild"
-      ? h("div", { class: "badge k-rare" }, "🤯 UNHINGED")
-      : BADGES[p.kind]
-        ? h("div", { class: `badge k-${p.kind}` }, BADGES[p.kind])
-        : null;
-
-  const card = h(
-    "article",
-    { class: `card g-${b.genre}${p.clip ? " video" : ""}`, "data-key": keyOf(p) },
-    canvas,
-    h(
-      "div",
-      { class: "card-body" },
-      badge,
-      caption,
-      h("div", { class: "ref" }, refOf(p), h("span", { class: "tr" }, index.translation.id)),
-      p.clip ? h("div", { class: "credit" }, `🎙 ${p.clip.narrator}`) : null,
-      h(
-        "div",
-        { class: "chips" },
-        h("a", { class: "chip", href: `#/book/${b.id}` }, `${GENRES[b.genre].emoji} ${b.name}`),
-        theme ? h("a", { class: "chip", href: `#/theme/${theme.id}` }, `${theme.emoji} ${theme.name}`) : null,
-      ),
-    ),
-    h(
-      "aside",
-      { class: "rail" },
-      likeBtn,
-      h("a", { class: "act", href: `#/read/${b.id}/${p.c}/${p.v}`, "aria-label": "Read in context" }, h("span", {}, "📖"), h("small", {}, "Context")),
-      h("a", { class: "act", href: `#/book/${b.id}/play/${p.c}/${p.v}`, "aria-label": "Keep reading from here" }, h("span", {}, "▶️"), h("small", {}, "Binge")),
-      shareBtn,
-      soundBtn,
-      autoBtn,
-    ),
-    pill,
-    h("div", { class: "pause-icon", "aria-hidden": "true" }, "▶"),
-    h("div", { class: "playbar" }, progress),
+  const ref = h("div", { class: "ref" }, refOf(p), h("span", { class: "tr" }, index.translation.id));
+  const credit = verse ? h("div", { class: "credit" }, `🎙 ${verse.clip.narrator}`) : null;
+  const chips = h(
+    "div",
+    { class: "chips" },
+    h("a", { class: "chip", href: `#/book/${b.id}` }, `${GENRES[b.genre].emoji} ${b.name}`),
+    p.char ? h("a", { class: "chip", href: "#/watch" }, "🤌 Brainrot Bible") : null,
+    theme ? h("a", { class: "chip", href: `#/theme/${theme.id}` }, `${theme.emoji} ${theme.name}`) : null,
   );
+  const rail = h(
+    "aside",
+    { class: "rail" },
+    likeBtn,
+    h("a", { class: "act", href: `#/read/${b.id}/${p.c}/${p.v}`, "aria-label": "Read in context" }, h("span", {}, "📖"), h("small", {}, "Context")),
+    h("a", { class: "act", href: `#/book/${b.id}/play/${p.c}/${p.v}`, "aria-label": "Keep reading from here" }, h("span", {}, "▶️"), h("small", {}, "Binge")),
+    shareBtn,
+    soundBtn,
+    autoBtn,
+  );
+  const overlay = [pill, h("div", { class: "pause-icon", "aria-hidden": "true" }, "▶"), h("div", { class: "playbar" }, progress)];
 
+  let card: HTMLElement;
+  let canvas: HTMLCanvasElement | undefined;
+  let image: HTMLImageElement | undefined;
+  let captions: Playable["captions"];
+
+  if (p.char && p.parts) {
+    // Brainrot: character art, shouted name, pop-up captions over the chant then the verse.
+    image = h("img", { class: "char-img", src: p.char.image, alt: p.char.name, decoding: "async" }) as HTMLImageElement;
+    captions = popCaptions(p.parts);
+    card = h(
+      "article",
+      { class: "card brainrot video", "data-key": keyOf(p) },
+      h("div", { class: "char-frame" }, image),
+      h("div", { class: "char-name" }, p.char.name),
+      captions.el,
+      h("div", { class: "card-body" }, verse ? null : h("blockquote", { class: "verse sm" }, p.text), ref, credit, chips),
+      rail,
+      ...overlay,
+    );
+  } else {
+    canvas = h("canvas", { class: "bg", "aria-hidden": "true" }) as HTMLCanvasElement;
+    if (verse) captions = karaoke(verse, `verse ${sizeClass(p.text)}`);
+    const badge =
+      p.theme === "wild"
+        ? h("div", { class: "badge k-rare" }, "🤯 UNHINGED")
+        : BADGES[p.kind]
+          ? h("div", { class: `badge k-${p.kind}` }, BADGES[p.kind])
+          : null;
+    card = h(
+      "article",
+      { class: `card g-${b.genre}${isVideo ? " video" : ""}`, "data-key": keyOf(p) },
+      canvas,
+      h("div", { class: "card-body" }, badge, captions?.el ?? h("blockquote", { class: `verse ${sizeClass(p.text)}` }, p.text), ref, credit, chips),
+      rail,
+      ...overlay,
+    );
+  }
+
+  const last = p.parts?.[p.parts.length - 1];
   const play: Playable = {
     card,
     canvas,
+    image,
+    title: p.char?.name,
     genre: b.genre,
     seed: Math.random() * 1000,
-    duration: p.clip ? p.clip.end - p.clip.start : readingTime(p.text),
-    clip: p.clip,
-    caption,
+    duration: last ? last.at + (last.clip.end - last.clip.start) + (verse ? 0 : readingTime(p.text)) : readingTime(p.text),
+    parts: p.parts ?? [],
+    captions,
     progress,
+    text: p.text,
   };
 
   // Single tap pauses, double tap likes.
@@ -629,14 +678,25 @@ interface Feed {
 
 const cardData = new WeakMap<Element, { p: Card; play: Playable }>();
 
-async function attachClip(p: Card) {
-  if (!bookById.get(p.b)?.media) return;
-  try {
-    const chapters = await loadBook(p.b);
-    p.clip = (await loadClip(p.b, p.c, p.v, p.e, chapters[p.c - 1])) ?? undefined;
-  } catch (err) {
-    console.warn("No narration, showing text card", err);
+/** Audio parts for a card: a character's chant, then the verse narration if that chapter is narrated. */
+async function attachParts(p: Card) {
+  const parts: Part[] = [];
+  const char = p.char;
+  if (char) {
+    const end = char.chantDuration / 100;
+    const words = char.chant.split(/\s+/).map((w, i) => ({ w, t: char.chantWords[i] / 100 }));
+    parts.push({ kind: "chant", at: 0, clip: { src: char.audio, start: 0, end, words, narrator: "" } });
   }
+  if (bookById.get(p.b)?.media?.chapters.includes(p.c)) {
+    try {
+      const chapters = await loadBook(p.b);
+      const clip = await loadClip(p.b, p.c, p.v, p.e, chapters[p.c - 1]);
+      if (clip) parts.push({ kind: "verse", at: parts.length ? parts[0].clip.end + 0.35 : 0, clip });
+    } catch (err) {
+      console.warn("No narration, showing text card", err);
+    }
+  }
+  if (parts.length) p.parts = parts;
 }
 
 function createFeed(source: Source, label?: { text: string; back: string }): Feed {
@@ -693,7 +753,7 @@ function createFeed(source: Source, label?: { text: string; back: string }): Fee
           scroller.append(h("article", { class: "card end" }, h("div", { class: "card-body" }, h("blockquote", { class: "verse lg" }, "You reached the end. Amen. 🙏"))));
           break;
         }
-        await attachClip(p);
+        await attachParts(p);
         const { el, play } = renderCard(p);
         cardData.set(el, { p, play });
         scroller.append(el);
@@ -766,7 +826,7 @@ function booksView() {
         { class: "book-grid" },
         ...index.books
           .filter((b) => b.genre === g)
-          .map((b) => h("a", { class: `book-tile g-${b.genre}`, href: `#/book/${b.id}` }, h("strong", {}, b.media ? `${b.name} 🎬` : b.name), progressBar(bookSeen(b), bookVerseCount(b)))),
+          .map((b) => h("a", { class: `book-tile g-${b.genre}`, href: `#/book/${b.id}` }, h("strong", {}, b.media ? `${b.name} 🎙` : b.name), progressBar(bookSeen(b), bookVerseCount(b)))),
       ),
     ),
   );
@@ -779,7 +839,7 @@ function bookView(b: BookMeta) {
   const seen = bookSeen(b);
   mountPage(
     h("a", { class: "back", href: "#/books" }, "← Books"),
-    h("div", { class: `book-hero g-${b.genre}` }, h("div", { class: "muted-light" }, `${GENRES[b.genre].emoji} ${GENRES[b.genre].label}`), h("h1", {}, b.name), h("div", {}, `${b.chapters.length} chapters · ${total.toLocaleString()} verses · ${Math.round((seen / total) * 100)}% seen`), progressBar(seen, total), b.media ? h("div", { class: "muted-light" }, `🎬 Video with narration by ${b.media.narrator}`) : ""),
+    h("div", { class: `book-hero g-${b.genre}` }, h("div", { class: "muted-light" }, `${GENRES[b.genre].emoji} ${GENRES[b.genre].label}`), h("h1", {}, b.name), h("div", {}, `${b.chapters.length} chapters · ${total.toLocaleString()} verses · ${Math.round((seen / total) * 100)}% seen`), progressBar(seen, total), b.media ? h("div", { class: "muted-light" }, `🎙 ${b.media.chapters.length === b.chapters.length ? "Narrated" : `${b.media.chapters.length} narrated chapter${b.media.chapters.length > 1 ? "s" : ""}`}, read by ${b.media.narrator}`) : ""),
     h("div", { class: "actions" }, h("a", { class: "btn primary", href: `#/book/${b.id}/play` }, "▶️ Binge in order"), h("a", { class: "btn", href: `#/book/${b.id}/shuffle` }, "🔀 Shuffle this book")),
     h("h2", {}, "Chapters"),
     h("div", { class: "chapter-grid" }, ...b.chapters.map((_, i) => h("a", { href: `#/read/${b.id}/${i + 1}` }, String(i + 1)))),
@@ -860,9 +920,9 @@ async function route() {
   }
   if (root === "books") return booksView();
   if (root === "watch") {
-    if (!mediaBooks().length) return go("#/");
+    if (!characters.length && !mediaBooks().length) return go("#/");
     setTab("watch");
-    return mountFeed(createFeed(watchSource(), { text: `🎬 Narrated: ${mediaBooks().map((b) => b.name).join(", ")}`, back: "#/" }));
+    return mountFeed(createFeed(brainrotSource(), { text: "🤌 Brainrot Bible", back: "#/" }));
   }
   if (root === "themes") return themesView();
   if (root === "me") return meView();
@@ -923,7 +983,7 @@ async function start() {
   touchStreak();
   renderStats();
   $("#app").classList.add("muted");
-  if (!mediaBooks().length) $('.tabs a[data-tab="watch"]').remove();
+  if (!characters.length && !mediaBooks().length) $('.tabs a[data-tab="watch"]').remove();
   window.addEventListener("hashchange", route);
   route();
 }

@@ -1,0 +1,100 @@
+[
+  {
+    "id": "giona-balenone",
+    "name": "Giona Balenone",
+    "chant": "Giona Balenone! Giona Balenone! Inghiottito dal pescione, tre giorni nel pancione!",
+    "prompt": "a giant blue whale fused with an old wooden Mediterranean fishing boat, a small bearded man in a brown robe (the prophet Jonah) peeking out of the whale's open mouth looking shocked, the whale wears chunky white sneakers on little legs, stormy sea",
+    "refs": ["Jonah 1:17", "Jonah 1:3", "Jonah 2:10", "Jonah 3:10"]
+  },
+  {
+    "id": "sansone-mascellone",
+    "name": "Sansone Mascellone",
+    "chant": "Sansone Mascellone! Sansone Mascellone! Con la mascella d'asino, mille nemici giù!",
+    "prompt": "a hulking muscular man with extremely long flowing hair whose head is a giant donkey jawbone with a toothy grin, wearing ancient sandals and gym shorts, flexing, desert battlefield",
+    "refs": ["Judges 15:15-16", "Judges 16:3", "Judges 16:17", "Judges 16:29-30"]
+  },
+  {
+    "id": "asinello-parlantello",
+    "name": "Asinello Parlantello",
+    "chant": "Asinello Parlantello! L'asina parla, il profeta non capisce niente!",
+    "prompt": "a grey donkey wearing sunglasses and a gold chain, talking into a microphone with its mouth wide open, a shocked bearded ancient prophet riding it, a glowing angel with a sword standing in the dirt road behind",
+    "refs": ["Numbers 22:28", "Numbers 22:30", "Numbers 22:31"]
+  },
+  {
+    "id": "golia-gigantolino",
+    "name": "Golia Gigantolino",
+    "chant": "Golia Gigantolino! Grande grande grande, un sassolino in fronte, bum! Giù per terra!",
+    "prompt": "an enormous giant warrior in bronze armor with a comically tiny head, a small pebble bouncing off his forehead, a tiny shepherd boy with a sling at his feet, valley battlefield with two armies watching",
+    "refs": ["1 Samuel 17:4", "1 Samuel 17:45", "1 Samuel 17:49", "1 Samuel 17:50"]
+  },
+  {
+    "id": "eliseo-pelatino",
+    "name": "Eliseo Pelatino",
+    "chant": "Eliseo Pelatino! Non chiamarlo testa pelata, arrivano due orse!",
+    "prompt": "a bald old prophet in robes whose shiny bald head is a mirrored disco ball, two big brown bears in matching tracksuits standing behind him like bodyguards, forest road",
+    "refs": ["2 Kings 2:23-24", "2 Kings 6:5-6"]
+  },
+  {
+    "id": "elia-carrozzino",
+    "name": "Elia Carrozzino",
+    "chant": "Elia Carrozzino! Carro di fuoco, cavalli di fuoco, vrum vrum, dritto in cielo!",
+    "prompt": "an old prophet with a wild white beard riding a flaming red Italian scooter fused with a chariot, pulled by horses made of fire, flying up into the sky inside a whirlwind",
+    "refs": ["2 Kings 2:11", "1 Kings 18:27", "1 Kings 18:38"]
+  },
+  {
+    "id": "nabucco-erbivoro",
+    "name": "Nabucco Erbivoro",
+    "chant": "Nabucco Erbivoro! Re di Babilonia, mangia l'erba come un bue!",
+    "prompt": "an ancient Babylonian king with a jeweled crown and long feathery hair, with the body of an ox, grazing on grass in a field, long bird-like claws, a ruined golden palace behind",
+    "refs": ["Daniel 4:33", "Daniel 4:34", "Daniel 4:37"]
+  },
+  {
+    "id": "leone-dormiglione",
+    "name": "Leone Dormiglione",
+    "chant": "Leone Dormiglione! Daniele nella fossa, ma l'angelo chiude la bocca ai leoni!",
+    "prompt": "a huge sleepy lion wearing a nightcap and striped pajamas, snoring on a pillow, a glowing angel gently holding its mouth shut, a calm man in a robe sitting beside it inside a stone pit",
+    "refs": ["Daniel 6:16", "Daniel 6:22", "Daniel 6:23"]
+  },
+  {
+    "id": "rana-faraona",
+    "name": "Rana Faraona",
+    "chant": "Rana Faraona! Rane nel letto, rane nel forno, rane dappertutto! Cra cra cra!",
+    "prompt": "a giant green frog wearing an Egyptian pharaoh headdress and golden collar, sitting on a royal bed, hundreds of small frogs everywhere in an Egyptian palace bedroom, on the bed, in bread ovens and bowls",
+    "refs": ["Exodus 8:3", "Exodus 8:6", "Exodus 8:13-14"]
+  },
+  {
+    "id": "matusalemme-candelone",
+    "name": "Matusalemme Candelone",
+    "chant": "Matusalemme Candelone! Novecentosessantanove anni, troppe candeline!",
+    "prompt": "an extremely ancient man with a white beard so long it wraps around the whole room, wearing a party hat, holding an enormous birthday cake covered in hundreds of lit candles, flames and smoke",
+    "refs": ["Genesis 5:27", "Genesis 5:21-24"]
+  },
+  {
+    "id": "leviatano-spaghettone",
+    "name": "Leviatano Spaghettone",
+    "chant": "Leviatano Spaghettone! Fuoco dalla bocca, fumo dal naso, il mare bolle come una pentola!",
+    "prompt": "a colossal sea dragon whose body is made of giant spaghetti noodles and tomato sauce, breathing fire from its mouth and smoke from its nostrils, the sea boiling around it like a giant cooking pot",
+    "refs": ["Job 41:1", "Job 41:19-21", "Job 41:31"]
+  },
+  {
+    "id": "zaccheo-alberello",
+    "name": "Zaccheo Alberello",
+    "chant": "Zaccheo Alberello! Piccolo piccolino, sale sul sicomoro per vedere Gesù!",
+    "prompt": "a very short man fused with a sycamore tree, his arms are branches and his hair is leaves, peeking over a crowd on an ancient Middle Eastern city street",
+    "refs": ["Luke 19:3-4", "Luke 19:5", "Luke 19:8"]
+  },
+  {
+    "id": "eutico-finestrino",
+    "name": "Eutico Finestrino",
+    "chant": "Eutico Finestrino! Paolo predica, predica, predica, lui dorme e cade dalla finestra!",
+    "prompt": "a sleepy young man fused with a wooden window frame, snoring as he falls out of a third-floor window at night, oil lamps glowing in the upper room behind him",
+    "refs": ["Acts 20:9", "Acts 20:10", "Acts 20:12"]
+  },
+  {
+    "id": "pietro-surfino",
+    "name": "Pietro Surfino",
+    "chant": "Pietro Surfino! Cammina sull'acqua, guarda il vento, glu glu glu!",
+    "prompt": "a bearded ancient fisherman riding a surfboard that is a giant fish, on a stormy sea at night with huge waves and wind, his face panicking as he starts to sink",
+    "refs": ["Matthew 14:29", "Matthew 14:30", "Matthew 14:31"]
+  }
+]

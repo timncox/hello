@@ -2,6 +2,8 @@
 //   public/bible/index.json        translation info + book list (chapter/verse counts)
 //   public/bible/books/<id>.json   one book: string[][] (chapters -> verses)
 //   public/bible/themes.json       curated themes from src/data/themes.json, text resolved
+//   public/bible/characters.json   brainrot characters from src/data/characters.json, with
+//                                  chant timings from public/brainrot/<id>.json (scripts/make-chants.py)
 //
 // Source text: Berean Standard Bible (public domain), fetched from bereanbible.com
 // and cached in scripts/.cache. To swap translations, produce a file in the same
@@ -9,7 +11,7 @@
 //
 // Usage: npm run bible
 
-import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -115,12 +117,14 @@ for (const b of books) {
   await writeFile(join(OUT, "books", `${b.id}.json`), JSON.stringify(b.chapters));
 }
 
-// Narrated books (public/media/<book>/<chapter>.json from scripts/align-audio.py) play as video.
+// Narrated chapters (public/media/<book>/<chapter>.json from scripts/align-audio.py) play as video.
 async function mediaFor(id) {
-  const first = join(ROOT, "public/media", id, "1.json");
-  if (!existsSync(first)) return undefined;
-  const { narrator } = JSON.parse(await readFile(first, "utf8"));
-  return { narrator };
+  const dir = join(ROOT, "public/media", id);
+  if (!existsSync(dir)) return undefined;
+  const chapters = (await readdir(dir)).filter((f) => /^\d+\.json$/.test(f)).map((f) => parseInt(f)).sort((a, b) => a - b);
+  if (!chapters.length) return undefined;
+  const { narrator } = JSON.parse(await readFile(join(dir, `${chapters[0]}.json`), "utf8"));
+  return { narrator, chapters };
 }
 
 await writeFile(
@@ -141,4 +145,21 @@ await writeFile(
   JSON.stringify(themes.map(({ refs, ...t }) => ({ ...t, passages: refs.map((r) => resolveRef(r, lookup)) }))),
 );
 
-console.log(`Wrote ${books.length} books, ${total} verses, ${themes.length} themes to public/bible/`);
+const characters = JSON.parse(await readFile(join(ROOT, "src/data/characters.json"), "utf8"));
+const resolvedCharacters = [];
+for (const { id, name, chant, refs } of characters) {
+  const timing = join(ROOT, "public/brainrot", `${id}.json`);
+  if (!existsSync(timing)) {
+    console.warn(`Skipping ${id}: no chant yet (run scripts/make-chants.py)`);
+    continue;
+  }
+  const { duration, words } = JSON.parse(await readFile(timing, "utf8"));
+  resolvedCharacters.push({
+    id, name, chant, image: `/brainrot/${id}.jpg`, audio: `/brainrot/${id}.mp3`,
+    chantDuration: duration, chantWords: words,
+    passages: refs.map((r) => resolveRef(r, lookup)),
+  });
+}
+await writeFile(join(OUT, "characters.json"), JSON.stringify(resolvedCharacters));
+
+console.log(`Wrote ${books.length} books, ${total} verses, ${themes.length} themes, ${resolvedCharacters.length} characters to public/bible/`);

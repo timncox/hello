@@ -58,21 +58,32 @@ The home page is a full-screen Bible feed app, not markdown content:
 
 ```
 src/pages/index.astro      # app shell (uses Base with `bare`)
-src/scripts/app.ts         # all app logic: feed sources, cards, routing (#/books, #/book/<id>, #/read/<id>/<ch>, #/themes, #/theme/<id>, #/watch, #/me)
+src/scripts/app.ts         # all app logic: feed sources, cards, routing (#/books, #/book/<id>, #/read/<id>/<ch>, #/themes, #/theme/<id>, #/watch = Brainrot Bible, #/me)
 src/scripts/video.ts       # video cards: narration playback, word-synced captions, export to MP4/WebM
 src/scripts/motion.ts      # animated canvas backgrounds, one look per genre
 src/styles/app.css         # app styles (genre gradients, cards, pages)
 src/data/themes.json       # curated themes: references only, e.g. "Romans 8:38-39"
 scripts/build-bible.mjs    # `npm run bible`: regenerates public/bible/ from the source text + themes.json
 public/bible/              # generated: index.json, themes.json, books/<id>.json (don't hand-edit)
+src/data/characters.json   # brainrot characters: id, name, Italian chant, art prompt, verse refs
+scripts/fetch-audio.py     # download + re-encode BSB narration for chapters
 scripts/align-audio.py     # word-level timing for narrated chapters (faster-whisper + alignment to BSB text)
+scripts/make-chants.py     # synthesize + time each character's chant (Piper Italian TTS)
+public/brainrot/           # <id>.jpg art (720x1280), <id>.mp3 chant, <id>.json chant word timings
 public/media/<book>/       # narration: <cc>.mp3 (40 kbps mono) + <chapter>.json word timings
 ```
 
 Adding narration for a book (BSB audio is CC0, from openbible.com/audio/souer/BSB_<nn>_<Abc>_<ccc>.mp3):
-1. Download chapter MP3s, re-encode: `ffmpeg -i in.mp3 -ac 1 -ar 24000 -b:a 40k -map_metadata -1 public/media/<book>/<cc>.mp3`
-2. `pip install faster-whisper`, then `python scripts/align-audio.py <book> public/media/<book> --narrator "Bob Souer"`
-3. `npm run bible` so index.json marks the book as narrated; its cards then play as video.
+1. `pip install faster-whisper piper-tts`
+2. `python scripts/fetch-audio.py <book> <chapters>` (e.g. `jonah 1-4`)
+3. `python scripts/align-audio.py <book> public/media/<book> --narrator "Bob Souer" --chapters <chapters>`
+4. `npm run bible` so index.json lists the narrated chapters; their cards then play as video.
+
+Adding a brainrot character:
+1. Add an entry to `src/data/characters.json`. Name: pseudo-Italian, rhyming, about the story (never a copy of an existing meme character). Chant: short, Italian, and accurate to the passage. Refs: verses from that story, ideally in narrated chapters.
+2. Generate art from the entry's `prompt` (vertical, "surreal hyperrealistic 3D render, Italian brainrot meme style, no text"), save as `public/brainrot/<id>.jpg` at 720x1280.
+3. `python scripts/make-chants.py --only <id>`, narrate its chapters (above), then `npm run bible`.
+- God and Jesus are never turned into mascots; characters are people, animals, creatures and objects from the stories.
 
 - Scripture text is the Berean Standard Bible (public domain). Do NOT add NIV/ESV/NLT or other copyrighted text without a license.
 - To add or change a theme, edit `src/data/themes.json`, then run `npm run bible` (it fails loudly on a bad reference).

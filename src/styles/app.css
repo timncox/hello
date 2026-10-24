@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Anton&display=swap");
+
 /* Scrollture app styles. Colors come from the theme tokens in Base.astro (--accent, --bg, --fg...). */
 
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
@@ -156,6 +158,35 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 
 .card.end { background: linear-gradient(160deg, #111, #333); text-align: center; }
 
+/* ---------- brainrot cards ---------- */
+.card.brainrot { background: #000; }
+.char-frame { position: absolute; inset: 0; overflow: hidden; }
+.char-img { width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: 50% 45%; }
+.card.brainrot.active .char-frame { animation: kenburns 16s ease-in-out infinite alternate; }
+@keyframes kenburns { from { transform: scale(1.03); } to { transform: scale(1.14) translateY(-1.5%); } }
+.card.brainrot::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 26%, transparent 48%, rgba(0,0,0,0.8));
+}
+.char-name, .pop-caption {
+  position: absolute; z-index: 2; left: 12px; right: 76px; pointer-events: none; text-align: center;
+  font-family: "Anton", Impact, "Arial Black", sans-serif; text-transform: uppercase; color: #fff; line-height: 1.02;
+  text-shadow: 3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000, 0 3px 0 #000, 0 -3px 0 #000, 3px 0 0 #000, -3px 0 0 #000, 0 8px 18px rgba(0,0,0,0.6);
+}
+.char-name { top: calc(max(0.6rem, env(safe-area-inset-top)) + 9.6rem); font-size: clamp(2.3rem, 10.5vw, 3.8rem); }
+.card.brainrot[data-phase="chant"] .char-name { color: #ffe14d; }
+.pop-caption {
+  top: 52%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.28em;
+  font-size: clamp(2.5rem, 12vw, 4.3rem); transform-origin: 50% 50%;
+}
+.pop-caption .hot { color: #ffe14d; }
+.card.brainrot .card-body {
+  position: absolute; z-index: 2; left: 0; right: 0; bottom: max(1.1rem, env(safe-area-inset-bottom));
+  padding: 0 84px 0 20px; max-width: none;
+}
+.card.brainrot .card-body .verse { margin-bottom: 0.8rem; }
+.card.brainrot .ref { margin-top: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+
 /* genre palettes (cards, tiles, heroes) */
 .g-law        { background: linear-gradient(160deg, #2d1b4e, #8a3b5c); }
 .g-history    { background: linear-gradient(160deg, #0f2027, #2c5364); }
@@ -258,5 +289,5 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .noscript { max-width: 680px; margin: 0 auto; padding: 5rem 16px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .verse, .burst, .act.like.on span, .sheet { animation: none; }
+  .verse, .burst, .act.like.on span, .sheet, .card.brainrot.active .char-frame { animation: none; }
 }
