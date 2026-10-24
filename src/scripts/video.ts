@@ -182,8 +182,11 @@ export interface Playable {
   vibe?: { canvas: HTMLCanvasElement; kind: Vibe; hue: number; beats: number[] };
 }
 
-/** Fraction of the card height given to the top (content) half of a split screen. */
+/** Fraction of the card height given to the top (content) part of a split screen.
+ *  Brainrot cards get more, so the portrait art fits (keep in sync with app.css). */
 export const SPLIT = 0.56;
+export const SPLIT_ART = 0.68;
+const splitOf = (p: Playable) => (p.image ? SPLIT_ART : SPLIT);
 
 /** Word times on the card timeline; text-only cards get a steady reading pulse. */
 export function beatsFor(parts: Part[], text: string) {
@@ -227,6 +230,8 @@ const LOOP_GAP_MS = 1200;
 export class Stage {
   readonly audio = new Audio();
   muted = true;
+  /** Playback speed for narration, chants and reading pace. */
+  rate = 1;
   paused = false;
   current: Playable | null = null;
   /** Called when the current card finishes; return true if the app moved on. */
@@ -286,6 +291,12 @@ export class Stage {
     this.syncAudio();
   }
 
+  setRate(rate: number) {
+    this.rate = rate;
+    this.audio.defaultPlaybackRate = rate;
+    this.audio.playbackRate = rate;
+  }
+
   togglePause() {
     const p = this.current;
     if (!p) return;
@@ -329,6 +340,8 @@ export class Stage {
       }, { once: true });
     }
     this.audio.currentTime = hit.fileT;
+    this.audio.defaultPlaybackRate = this.rate;
+    this.audio.playbackRate = this.rate;
     this.pending = true;
     this.audio.play().then(
       () => (this.pending = false),
@@ -372,7 +385,7 @@ export class Stage {
           this.elapsed = part.at + partLen(part); // file ran out before the padded clip end
           this.partIdx = -1;
         } else {
-          this.elapsed = (now - this.clock0) / 1000;
+          this.elapsed += dt * this.rate;
         }
         this.clock0 = now - this.elapsed * 1000;
 
@@ -468,22 +481,30 @@ function outlined(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
   ctx.fillText(text, x, y);
 }
 
-function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, boxH: number, scale: number, dx: number, dy: number) {
-  const s = Math.max(W / img.naturalWidth, boxH / img.naturalHeight) * scale;
-  const w = img.naturalWidth * s;
-  const h = img.naturalHeight * s;
+/** Whole image fitted inside the box (never cropped), over a blurred, darkened fill of itself. */
+function drawArt(ctx: CanvasRenderingContext2D, img: HTMLImageElement, boxH: number, scale: number, dx: number, dy: number) {
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, W, boxH);
   ctx.clip();
-  ctx.drawImage(img, (W - w) / 2 + dx, (boxH - h) * 0.45 + dy, w, h);
+  const cover = Math.max(W / img.naturalWidth, boxH / img.naturalHeight) * 1.15;
+  ctx.filter = "blur(28px)";
+  const blurred = ctx.filter === "blur(28px)"; // Safari < 18 ignores canvas filters
+  ctx.drawImage(img, (W - img.naturalWidth * cover) / 2, (boxH - img.naturalHeight * cover) / 2, img.naturalWidth * cover, img.naturalHeight * cover);
+  ctx.filter = "none";
+  ctx.fillStyle = blurred ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.7)";
+  ctx.fillRect(0, 0, W, boxH);
+  const s = Math.min(W / img.naturalWidth, boxH / img.naturalHeight) * scale;
+  const w = img.naturalWidth * s;
+  const h = img.naturalHeight * s;
+  ctx.drawImage(img, (W - w) / 2 + dx, (boxH - h) / 2 + dy, w, h);
   ctx.restore();
 }
 
 /** Bottom panel of a split-screen frame. */
 function drawVibePanel(ctx: CanvasRenderingContext2D, p: Playable, t: number) {
   if (!p.vibe) return;
-  const top = Math.round(H * SPLIT);
+  const top = Math.round(H * splitOf(p));
   ctx.save();
   ctx.translate(0, top);
   ctx.beginPath();
@@ -501,10 +522,10 @@ function drawBrainrotFrame(ctx: CanvasRenderingContext2D, p: Playable, meta: Vid
   const chanting = hit?.part.kind === "chant";
   const kick = Math.max(0, 1 - sinceWord / (chanting ? 0.22 : 0.18)) * (chanting ? 0.1 : 0.04);
   const shake = chanting && sinceWord < 0.15 ? 7 : 0;
-  const imgH = p.vibe ? H * SPLIT : H;
+  const imgH = p.vibe ? H * SPLIT_ART : H;
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, W, H);
-  drawCover(ctx, p.image!, imgH, 1.04 + (0.06 * t) / p.duration + kick, Math.sin(t * 60) * shake, Math.cos(t * 47) * shake);
+  drawArt(ctx, p.image!, imgH, 1 + (0.03 * t) / p.duration + kick, Math.sin(t * 60) * shake, Math.cos(t * 47) * shake);
   drawVibePanel(ctx, p, t);
 
   const shade = ctx.createLinearGradient(0, imgH * 0.6, 0, imgH);
@@ -528,7 +549,7 @@ function drawBrainrotFrame(ctx: CanvasRenderingContext2D, p: Playable, meta: Vid
       const pop = layout(ctx, words, (s) => `${s}px ${POP_FONT}`, chanting ? 96 : 84, W - 90, 340, 1.08);
       const ageChunk = hit.fileT - hit.part.clip.words[chunk[0]].t;
       const scale = ageChunk < 0.1 ? 0.6 + ageChunk * 5 : ageChunk < 0.2 ? 1.1 - (ageChunk - 0.1) : 1;
-      const cy = (p.vibe ? H * SPLIT - 40 : H * 0.66) - (pop.lines.length * pop.lineH) / 2;
+      const cy = (p.vibe ? H * SPLIT_ART - 30 : H * 0.7) - (pop.lines.length * pop.lineH) / 2;
       ctx.save();
       ctx.translate(W / 2, cy + (pop.lines.length * pop.lineH) / 2);
       ctx.scale(scale, scale);

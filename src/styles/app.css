@@ -160,8 +160,7 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   padding: 0.25rem 0.55rem; border-radius: 999px; pointer-events: none;
 }
 .card.split.looping::before { bottom: auto; top: calc(56% + 0.6rem); }
-.act.auto span { filter: grayscale(1) brightness(1.4); }
-.act.auto.on span { filter: none; background: var(--accent); }
+.act.speed span { font-size: 1rem; font-weight: 800; font-family: var(--font); }
 
 .card.end { background: linear-gradient(160deg, #111, #333); text-align: center; }
 
@@ -188,14 +187,24 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 /* ---------- brainrot cards ---------- */
 .card.brainrot { background: #000; }
 .char-frame { position: absolute; inset: 0; overflow: hidden; }
-.card.brainrot.split .char-frame { bottom: 44%; }
-.card.brainrot.split::after { background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 24%, transparent 38%, rgba(0,0,0,0.55) 56%, transparent 56%); }
-.card.brainrot.split .pop-caption { top: calc(56% - 1.25em); z-index: 3; }
+/* brainrot split: art gets 68% (keep in sync with SPLIT_ART in video.ts) */
+.card.brainrot.split .char-frame { bottom: 32%; }
+.card.brainrot.split canvas.vibe { height: 32%; }
+.card.brainrot.split::after { background: linear-gradient(to bottom, rgba(0,0,0,0.45), transparent 20%, transparent 55%, rgba(0,0,0,0.5) 68%, transparent 68%); }
+.card.brainrot.split .pop-caption { top: calc(68% - 1.6em); z-index: 3; }
+.card.brainrot.split .sound-pill { top: calc(68% + 0.6rem); }
+.card.brainrot.split.looping::before { top: calc(68% + 0.6rem); }
 .card.brainrot.split .card-body { z-index: 3; }
+.card.brainrot.split .credit { display: none; }
 .card.brainrot.split .ref, .card.brainrot.split .credit { text-shadow: 0 1px 3px #000, 0 2px 10px rgba(0,0,0,0.9); }
-.char-img { width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: 50% 45%; }
-.card.brainrot.active .char-frame { animation: kenburns 16s ease-in-out infinite alternate; }
-@keyframes kenburns { from { transform: scale(1.03); } to { transform: scale(1.14) translateY(-1.5%); } }
+/* the whole portrait art, never cropped, over a blurred fill of itself */
+.char-img { position: relative; width: 100%; height: 100%; object-fit: contain; display: block; transform-origin: 50% 50%; }
+.char-fill {
+  position: absolute; inset: -8%; width: 116%; height: 116%; object-fit: cover;
+  filter: blur(26px) brightness(0.6) saturate(1.2);
+}
+.card.brainrot.active .char-img { animation: kenburns 16s ease-in-out infinite alternate; }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.04); } }
 .card.brainrot::after {
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 26%, transparent 48%, rgba(0,0,0,0.8));

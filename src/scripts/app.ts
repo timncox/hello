@@ -472,13 +472,23 @@ function setAuto(on: boolean, message?: string) {
   autoScroll = on;
   store.set("autoplay", on);
   if (!on && activeFeed) activeFeed.continuous = false;
-  document.querySelectorAll(".act.auto").forEach((el) => el.classList.toggle("on", on));
   document.querySelectorAll(".card.looping").forEach((el) => el.classList.remove("looping"));
   if (!on) stage.current?.card.classList.add("looping");
   toast(message ?? (on ? "⏩ Autoplay on" : "🔁 Autoplay off: cards loop"));
 }
 
 const toggleAuto = () => setAuto(!autoScroll);
+
+const SPEEDS = [1, 1.25, 1.5, 2, 0.75];
+stage.setRate(store.get("rate", 1));
+const speedLabel = () => `${stage.rate}×`;
+function cycleSpeed() {
+  const next = SPEEDS[(SPEEDS.indexOf(stage.rate) + 1) % SPEEDS.length];
+  stage.setRate(next);
+  store.set("rate", next);
+  document.querySelectorAll(".act.speed span").forEach((el) => (el.textContent = speedLabel()));
+  toast(`${next}× speed`);
+}
 
 let vibesOn = store.get("vibes", true);
 let lastVibe: Vibe | null = null;
@@ -597,8 +607,8 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
   const soundBtn = isVideo ? h("button", { class: "act sound", "aria-label": "Sound on/off" }, h("span", {}, stage.muted ? "🔇" : "🔊"), h("small", {}, "Sound")) : null;
   soundBtn?.addEventListener("click", () => stage.setMuted(!stage.muted));
 
-  const autoBtn = h("button", { class: `act auto${autoScroll ? " on" : ""}`, "aria-label": "Auto-scroll" }, h("span", {}, "⏩"), h("small", {}, "Auto"));
-  autoBtn.addEventListener("click", toggleAuto);
+  const speedBtn = h("button", { class: "act speed", "aria-label": "Playback speed" }, h("span", {}, speedLabel()), h("small", {}, "Speed"));
+  speedBtn.addEventListener("click", cycleSpeed);
 
   const pill = isVideo ? h("button", { class: "sound-pill" }, "🔇 Tap for sound") : null;
   pill?.addEventListener("click", () => stage.setMuted(false));
@@ -621,7 +631,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     h("a", { class: "act", href: `#/book/${b.id}/play/${p.c}/${p.v}`, "aria-label": "Keep going from here" }, h("span", {}, "▶️"), h("small", {}, "Keep going")),
     shareBtn,
     soundBtn,
-    autoBtn,
+    speedBtn,
   );
   const vibeCanvas = vibesOn ? (h("canvas", { class: "vibe", "aria-hidden": "true" }) as HTMLCanvasElement) : null;
   const overlay = [vibeCanvas, pill, h("div", { class: "pause-icon", "aria-hidden": "true" }, "▶"), h("div", { class: "playbar" }, progress)];
@@ -635,11 +645,12 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
   if (p.char && p.parts) {
     // Brainrot: character art, shouted name, pop-up captions over the chant then the verse.
     image = h("img", { class: "char-img", src: p.char.image, alt: p.char.name, decoding: "async" }) as HTMLImageElement;
+    const fill = h("img", { class: "char-fill", src: p.char.image, alt: "", "aria-hidden": "true", decoding: "async" });
     captions = popCaptions(p.parts);
     card = h(
       "article",
       { class: `card brainrot video${split}`, "data-key": keyOf(p) },
-      h("div", { class: "char-frame" }, image),
+      h("div", { class: "char-frame" }, fill, image),
       h("div", { class: "char-name" }, p.char.name),
       captions.el,
       h("div", { class: "card-body" }, verse ? null : h("blockquote", { class: "verse sm" }, p.text), ref, credit, chips),
@@ -1062,6 +1073,10 @@ async function start() {
     return;
   }
   touchStreak();
+  if (!store.get("tip-hold", false)) {
+    store.set("tip-hold", true);
+    setTimeout(() => toast("Tip: hold any card to stop autoplay and loop it"), 2500);
+  }
   renderStats();
   $("#app").classList.add("muted");
   if (!characters.length && !mediaBooks().length) $('.tabs a[data-tab="watch"]').remove();
