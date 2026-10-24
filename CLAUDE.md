@@ -52,6 +52,23 @@ public/
 - robots.txt allowing all + pointing at sitemap
 - Semantic HTML5 throughout
 
+## Scrollture app (this site)
+
+The home page is a full-screen Bible feed app, not markdown content:
+
+```
+src/pages/index.astro      # app shell (uses Base with `bare`)
+src/scripts/app.ts         # all app logic: feed sources, cards, routing (#/books, #/book/<id>, #/read/<id>/<ch>, #/themes, #/theme/<id>, #/me)
+src/styles/app.css         # app styles (genre gradients, cards, pages)
+src/data/themes.json       # curated themes: references only, e.g. "Romans 8:38-39"
+scripts/build-bible.mjs    # `npm run bible`: regenerates public/bible/ from the source text + themes.json
+public/bible/              # generated: index.json, themes.json, books/<id>.json (don't hand-edit)
+```
+
+- Scripture text is the Berean Standard Bible (public domain). Do NOT add NIV/ESV/NLT or other copyrighted text without a license.
+- To add or change a theme, edit `src/data/themes.json`, then run `npm run bible` (it fails loudly on a bad reference).
+- User state (likes, streak, progress) lives in localStorage under `scrollture:*` keys.
+
 ## Don't
 
 - Don't add a JS framework (React, Vue, etc.) unless the user explicitly asks. Astro islands stay zero-JS by default.

@@ -5,9 +5,11 @@ interface Props {
   title: string;
   description?: string;
   pageSlug: string;
+  /** Full-screen app mode: skip the site header/footer chrome. */
+  bare?: boolean;
 }
 
-const { title, description, pageSlug } = Astro.props;
+const { title, description, pageSlug, bare = false } = Astro.props;
 const pageDescription = description ?? site.site.description;
 const fullTitle = pageSlug === "/" ? `${site.site.name} — ${site.site.tagline}` : `${title} · ${site.site.name}`;
 const canonicalUrl = site.site.url ? new URL(pageSlug, site.site.url).toString() : pageSlug;
@@ -123,6 +125,7 @@ const navPages = getNonHomePages();
     </style>
   </head>
   <body>
+    {bare ? <slot /> : (
     <div class="container">
       <header class="site">
         <a class="brand" href="/">{site.site.name}</a>
@@ -144,5 +147,6 @@ const navPages = getNonHomePages();
         <span>built with <a href="https://github.com/" rel="noopener">loom</a></span>
       </footer>
     </div>
+    )}
   </body>
 </html>

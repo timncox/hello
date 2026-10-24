@@ -1,0 +1,110 @@
+[
+  {
+    "id": "love",
+    "name": "Love",
+    "emoji": "💘",
+    "refs": ["John 3:16", "1 Corinthians 13:4-7", "1 John 4:7-8", "1 John 4:18", "1 John 4:19", "Romans 5:8", "Romans 8:38-39", "John 15:13", "John 13:34-35", "1 Peter 4:8", "Colossians 3:14", "Zephaniah 3:17", "Jeremiah 31:3", "Ephesians 3:17-19", "Song of Solomon 8:6-7", "Lamentations 3:22-23", "Psalm 136:1", "Proverbs 10:12", "Romans 13:10", "Mark 12:30-31", "1 Corinthians 16:14", "1 John 3:18"]
+  },
+  {
+    "id": "anxiety",
+    "name": "Anxiety & Peace",
+    "emoji": "😮‍💨",
+    "refs": ["Philippians 4:6-7", "Matthew 6:34", "1 Peter 5:7", "John 14:27", "Isaiah 26:3", "Matthew 11:28-30", "Psalm 55:22", "Psalm 94:19", "John 16:33", "Psalm 4:8", "Isaiah 41:10", "Matthew 6:25-27", "Psalm 46:10", "Colossians 3:15", "2 Thessalonians 3:16", "Psalm 23:1-4", "Proverbs 12:25", "Numbers 6:24-26", "Romans 15:13", "Psalm 121:1-2"]
+  },
+  {
+    "id": "strength",
+    "name": "Strength",
+    "emoji": "💪",
+    "refs": ["Philippians 4:13", "Isaiah 40:29-31", "Joshua 1:9", "2 Corinthians 12:9-10", "Psalm 46:1", "Nehemiah 8:10", "Ephesians 6:10", "Psalm 18:2", "Psalm 28:7", "Exodus 15:2", "Habakkuk 3:19", "Deuteronomy 31:6", "Psalm 73:26", "Isaiah 12:2", "2 Timothy 1:7", "1 Corinthians 16:13", "Psalm 27:1", "Zechariah 4:6"]
+  },
+  {
+    "id": "hope",
+    "name": "Hope",
+    "emoji": "🌅",
+    "refs": ["Jeremiah 29:11", "Romans 15:13", "Romans 8:28", "Lamentations 3:22-24", "Romans 5:3-5", "Hebrews 11:1", "Hebrews 6:19", "Psalm 42:11", "Isaiah 40:31", "Revelation 21:4", "Romans 8:18", "1 Peter 1:3", "Psalm 39:7", "Proverbs 23:18", "Romans 12:12", "Micah 7:7", "Psalm 130:5", "2 Corinthians 4:16-18", "Titus 2:13"]
+  },
+  {
+    "id": "faith",
+    "name": "Faith",
+    "emoji": "🙏",
+    "refs": ["Hebrews 11:1", "Hebrews 11:6", "Mark 11:22-24", "Matthew 17:20", "Romans 10:17", "Ephesians 2:8-9", "Proverbs 3:5-6", "James 2:17", "2 Corinthians 5:7", "Galatians 2:20", "Romans 1:17", "Mark 9:24", "John 20:29", "1 Peter 1:8-9", "Habakkuk 2:4", "James 1:5-6", "Romans 4:20-21", "Hebrews 12:1-2"]
+  },
+  {
+    "id": "grace",
+    "name": "Forgiveness & Grace",
+    "emoji": "🕊️",
+    "refs": ["1 John 1:9", "Ephesians 4:32", "Colossians 3:13", "Psalm 103:10-12", "Isaiah 1:18", "Micah 7:18-19", "Matthew 6:14-15", "Matthew 18:21-22", "Luke 23:34", "Romans 3:23-24", "Romans 6:23", "Romans 8:1", "2 Corinthians 5:17", "Ephesians 1:7", "Isaiah 43:25", "Psalm 51:10", "Psalm 32:1", "Luke 15:20", "Acts 3:19", "Hebrews 8:12", "Titus 3:5", "2 Corinthians 12:9"]
+  },
+  {
+    "id": "wisdom",
+    "name": "Wisdom",
+    "emoji": "🧠",
+    "refs": ["Proverbs 1:7", "Proverbs 3:5-6", "James 1:5", "Proverbs 9:10", "Proverbs 4:23", "Proverbs 16:3", "Proverbs 16:9", "Proverbs 27:17", "Proverbs 15:1", "Proverbs 18:21", "Ecclesiastes 3:1", "Ecclesiastes 4:9-10", "Ecclesiastes 12:13", "Proverbs 17:17", "Proverbs 22:6", "Psalm 90:12", "Colossians 3:23", "James 3:17", "Proverbs 19:21", "Proverbs 12:15", "Proverbs 11:2", "Proverbs 13:20", "Micah 6:8"]
+  },
+  {
+    "id": "courage",
+    "name": "Courage",
+    "emoji": "🦁",
+    "refs": ["Joshua 1:9", "Deuteronomy 31:6", "Isaiah 41:10", "Psalm 27:1", "Psalm 56:3", "Psalm 23:4", "2 Timothy 1:7", "Isaiah 43:1-2", "Psalm 118:6", "Proverbs 28:1", "Hebrews 13:6", "John 14:27", "Psalm 34:4", "Romans 8:31", "1 John 4:18", "Esther 4:14", "Daniel 3:17-18", "1 Samuel 17:45", "Matthew 14:27", "Psalm 91:1-2"]
+  },
+  {
+    "id": "joy",
+    "name": "Joy",
+    "emoji": "😄",
+    "refs": ["Nehemiah 8:10", "Psalm 16:11", "Philippians 4:4", "John 15:11", "Psalm 30:5", "Psalm 118:24", "James 1:2-3", "Romans 15:13", "Galatians 5:22-23", "Psalm 126:3", "1 Thessalonians 5:16-18", "Proverbs 17:22", "Psalm 30:11", "Zephaniah 3:17", "Isaiah 55:12", "Luke 15:7", "John 16:22", "Habakkuk 3:17-18", "Psalm 100:1-2"]
+  },
+  {
+    "id": "praise",
+    "name": "Gratitude & Praise",
+    "emoji": "🙌",
+    "refs": ["Psalm 100:4-5", "1 Thessalonians 5:18", "Psalm 107:1", "Colossians 3:17", "Psalm 150:6", "Psalm 103:1-2", "James 1:17", "Psalm 9:1", "Psalm 136:1", "Philippians 4:6", "Psalm 95:1-2", "Psalm 34:1", "Ephesians 5:20", "Hebrews 13:15", "Revelation 4:11", "Psalm 8:1", "Psalm 145:3", "Psalm 19:1", "Colossians 2:6-7"]
+  },
+  {
+    "id": "identity",
+    "name": "Who You Are",
+    "emoji": "🪞",
+    "refs": ["Psalm 139:13-14", "Genesis 1:27", "2 Corinthians 5:17", "Ephesians 2:10", "1 Peter 2:9", "Galatians 2:20", "John 1:12", "Romans 8:16-17", "1 John 3:1", "Jeremiah 1:5", "Isaiah 43:1", "Matthew 5:14", "Colossians 3:3", "Galatians 3:28", "Romans 8:37", "Isaiah 49:16", "Matthew 10:29-31", "1 Corinthians 6:19-20", "Song of Solomon 4:7"]
+  },
+  {
+    "id": "purpose",
+    "name": "Purpose",
+    "emoji": "🎯",
+    "refs": ["Jeremiah 29:11", "Romans 8:28", "Ephesians 2:10", "Proverbs 19:21", "Proverbs 16:9", "Micah 6:8", "Matthew 28:19-20", "Matthew 5:16", "Colossians 3:23-24", "1 Corinthians 10:31", "Philippians 1:6", "Esther 4:14", "Isaiah 6:8", "Matthew 6:33", "Psalm 37:4-5", "Psalm 57:2", "Acts 20:24", "Philippians 3:13-14", "1 Peter 4:10"]
+  },
+  {
+    "id": "comfort",
+    "name": "Comfort in Grief",
+    "emoji": "🫂",
+    "refs": ["Psalm 34:18", "Matthew 5:4", "Revelation 21:4", "2 Corinthians 1:3-4", "Psalm 147:3", "John 11:25-26", "John 11:35", "Psalm 23:4", "1 Thessalonians 4:13-14", "John 14:1-3", "Romans 8:18", "Psalm 73:26", "Isaiah 61:1-3", "Lamentations 3:31-33", "Psalm 30:5", "Psalm 56:8", "Isaiah 53:4", "2 Corinthians 4:17-18", "Ecclesiastes 3:1-4"]
+  },
+  {
+    "id": "money",
+    "name": "Money & Contentment",
+    "emoji": "💸",
+    "refs": ["Matthew 6:19-21", "Matthew 6:24", "Hebrews 13:5", "1 Timothy 6:6-10", "Philippians 4:11-13", "Philippians 4:19", "Proverbs 3:9-10", "Malachi 3:10", "Luke 12:15", "Ecclesiastes 5:10", "Proverbs 22:7", "2 Corinthians 9:6-7", "Proverbs 11:24-25", "Mark 8:36", "Proverbs 13:11", "Proverbs 30:8-9", "Luke 16:10", "Acts 20:35", "1 Timothy 6:17-19", "Matthew 19:24"]
+  },
+  {
+    "id": "battle",
+    "name": "Temptation & Battle",
+    "emoji": "⚔️",
+    "refs": ["1 Corinthians 10:13", "James 1:12-15", "James 4:7", "Ephesians 6:11-13", "Matthew 26:41", "Hebrews 4:15-16", "Galatians 5:16-17", "Romans 12:2", "Romans 7:15", "1 Peter 5:8-9", "Psalm 119:11", "2 Timothy 2:22", "Matthew 4:4", "Romans 6:14", "1 John 2:15-17", "Proverbs 4:14-15", "Romans 13:14", "Galatians 6:9", "2 Corinthians 10:5", "Hebrews 12:1"]
+  },
+  {
+    "id": "jesus",
+    "name": "Words of Jesus",
+    "emoji": "✝️",
+    "refs": ["John 14:6", "John 8:12", "John 11:25-26", "Matthew 5:3-10", "Matthew 11:28-30", "John 10:10-11", "Matthew 7:7-8", "Matthew 22:37-39", "John 15:5", "Matthew 5:43-44", "Matthew 7:12", "Luke 9:23", "Matthew 28:18-20", "John 16:33", "Mark 10:27", "Luke 19:10", "John 6:35", "Matthew 6:9-13", "John 8:32", "Matthew 5:14-16", "Matthew 16:26", "Revelation 22:13", "Mark 10:45"]
+  },
+  {
+    "id": "creation",
+    "name": "Creation & Wonder",
+    "emoji": "🌌",
+    "refs": ["Genesis 1:1", "Psalm 19:1-2", "Psalm 8:3-4", "Romans 1:20", "Job 38:4-7", "Isaiah 40:26", "Psalm 104:24", "Colossians 1:16-17", "John 1:1-3", "Psalm 33:6", "Job 12:7-10", "Psalm 24:1", "Hebrews 11:3", "Psalm 148:3-5", "Genesis 1:31", "Psalm 95:4-5", "Jeremiah 32:17", "Nehemiah 9:6", "Amos 5:8", "Job 26:7", "Psalm 147:4"]
+  },
+  {
+    "id": "wild",
+    "name": "Wild Verses",
+    "emoji": "🤯",
+    "refs": ["2 Kings 2:23-24", "Judges 3:21-22", "Numbers 22:28", "Judges 15:15-16", "Genesis 5:27", "Judges 4:21", "Jonah 1:17", "Joshua 10:13", "2 Samuel 21:20", "Deuteronomy 3:11", "Mark 14:51-52", "Acts 20:9", "Daniel 5:5", "1 Kings 18:27", "Proverbs 26:11", "Proverbs 21:9", "Proverbs 27:14", "Ecclesiastes 10:20", "Judges 16:3", "Matthew 27:52-53", "Genesis 32:24", "2 Kings 6:5-6", "Exodus 7:12", "Daniel 4:33", "Acts 5:5", "Numbers 22:31"]
+  }
+]
