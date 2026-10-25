@@ -167,5 +167,182 @@
       "Matthew 14:30",
       "Matthew 14:31"
     ]
+  },
+  {
+    "id": "noahzino-arkarino",
+    "name": "Noahzino Arkarino",
+    "say": "Noazino Arcarino",
+    "chant": "Noahzino Arkarino! Animali a due a due, piove per quaranta giorni!",
+    "prompt": "an old bearded man whose body is a wooden ark boat, giraffes elephants and lions peeking out of windows in his chest, standing in a flood with a rainbow and a dove carrying an olive leaf",
+    "refs": [
+      "Genesis 7:9",
+      "Genesis 7:12",
+      "Genesis 8:11",
+      "Genesis 9:13"
+    ]
+  },
+  {
+    "id": "mosessino-seasplittino",
+    "name": "Mosessino Seasplittino",
+    "say": "Mosessino Sisplittino",
+    "chant": "Mosessino Seasplittino! Alza il bastone, e il mare si apre in due!",
+    "prompt": "a bearded man in robes holding a giant staff shaped like a zipper, unzipping the sea into two towering walls of water, fish staring out of the water walls, a dry seabed path",
+    "refs": [
+      "Exodus 14:21",
+      "Exodus 14:22",
+      "Exodus 14:28"
+    ]
+  },
+  {
+    "id": "saltina-lookbackina",
+    "name": "Saltina Lookbackina",
+    "say": "Soltina Lucbechina",
+    "chant": "Saltina Lookbackina! Non guardare indietro... troppo tardi, è sale!",
+    "prompt": "a statue-like elderly woman in a long modest robe and headscarf, carved entirely from sparkling white salt crystals, a giant silver salt-shaker lid sitting on her head like a hat, glancing back over her shoulder with a surprised expression, a distant ancient city on the horizon with smoke rising",
+    "refs": [
+      "Genesis 19:26",
+      "Genesis 19:17",
+      "Luke 17:32"
+    ]
+  },
+  {
+    "id": "jacobino-ladderino",
+    "name": "Jacobino Ladderino",
+    "say": "Gecobino Ledderino",
+    "chant": "Jacobino Ladderino! Dorme su una pietra, angeli su e giù per la scala!",
+    "prompt": "a sleepy man in robes with a stone as his pillow, his body fused with a golden ladder reaching up into glowing clouds, tiny angels climbing up and down the ladder",
+    "refs": [
+      "Genesis 28:11-12",
+      "Genesis 28:16",
+      "Genesis 32:24"
+    ]
+  },
+  {
+    "id": "josephino-coatcolorino",
+    "name": "Josephino Coatcolorino",
+    "say": "Giosefino Cotcolorino",
+    "chant": "Josephino Coatcolorino! Tunica colorata, buttato nel pozzo, poi capo d'Egitto!",
+    "prompt": "a young man whose whole body is a dazzling rainbow-colored ornate robe with sleeves flapping like wings, standing at the edge of a dry well, an Egyptian palace and pyramids behind him",
+    "refs": [
+      "Genesis 37:3",
+      "Genesis 37:23-24",
+      "Genesis 41:41",
+      "Genesis 50:20"
+    ]
+  },
+  {
+    "id": "jerichino-wallcrashino",
+    "name": "Jerichino Wallcrashino",
+    "say": "Gerichino Uolcrescino",
+    "chant": "Jerichino Wallcrashino! Sette giri, trombe e grida, e le mura crollano!",
+    "prompt": "a giant ram's horn trumpet with little legs and an angry face, blasting a visible sound wave that knocks down massive ancient stone city walls, marching priests behind it",
+    "refs": [
+      "Joshua 6:15-16",
+      "Joshua 6:20"
+    ]
+  },
+  {
+    "id": "raveno-deliverino",
+    "name": "Raveno Deliverino",
+    "say": "Reiveno Deliverino",
+    "chant": "Raveno Deliverino! Consegna a domicilio: pane e carne, mattina e sera!",
+    "prompt": "a black raven wearing a food delivery uniform and cap, riding a tiny scooter with an insulated delivery bag full of bread and meat, a bearded prophet waiting by a brook in a desert ravine",
+    "refs": [
+      "1 Kings 17:4",
+      "1 Kings 17:6"
+    ]
+  },
+  {
+    "id": "furnacino-chillino",
+    "name": "Furnacino Chillino",
+    "say": "Fernesino Cillino",
+    "chant": "Furnacino Chillino! Fornace sette volte più calda, ma nemmeno l'odore del fuoco!",
+    "prompt": "three young men in robes relaxing in beach chairs with sunglasses and drinks inside a blazing furnace, flames everywhere around them, completely unburned, a shocked ancient king staring through the furnace door",
+    "refs": [
+      "Daniel 3:17-18",
+      "Daniel 3:19",
+      "Daniel 3:27"
+    ]
+  },
+  {
+    "id": "babelino-towerino",
+    "name": "Babelino Towerino",
+    "say": "Beibelino Tauerino",
+    "chant": "Babelino Towerino! Una torre fino al cielo, poi tutti parlano lingue diverse!",
+    "prompt": "a tall spiral brick tower with a giant face and many mouths each babbling in different languages with speech bubbles full of scribbles, reaching into the clouds, confused builders at its base",
+    "refs": [
+      "Genesis 11:4",
+      "Genesis 11:7",
+      "Genesis 11:9"
+    ]
+  },
+  {
+    "id": "lazzarino-wakeupino",
+    "name": "Lazzarino Wakeupino",
+    "say": "Lazzarino Ueicappino",
+    "chant": "Lazzarino Wakeupino! Quattro giorni nella tomba, poi esce fuori tutto bendato!",
+    "prompt": "a man wrapped head to toe in white linen grave cloths like a mummy, stepping out of a rock-cut tomb, stretching and yawning like he just woke up, holding a ringing alarm clock",
+    "refs": [
+      "John 11:39",
+      "John 11:43-44"
+    ]
+  },
+  {
+    "id": "breadino-fishino",
+    "name": "Breadino Fishino",
+    "say": "Bredino Fiscino",
+    "chant": "Breadino Fishino! Cinque pani, due pesci, cinquemila persone sazie!",
+    "prompt": "a cheerful creature made of round bread loaves with two fish for arms, multiplying into hundreds of copies of itself, a huge crowd sitting on green grass on a hillside, baskets overflowing with leftovers",
+    "refs": [
+      "John 6:9",
+      "John 6:11",
+      "John 6:13"
+    ]
+  },
+  {
+    "id": "skeletrino-rattlerino",
+    "name": "Skeletrino Rattlerino",
+    "say": "Scheletrino Retlerino",
+    "chant": "Skeletrino Rattlerino! Ossa secche, clack clack clack, tornano in vita!",
+    "prompt": "a goofy dancing skeleton of dry bones rattling and snapping back together mid-air, cartoonish and not scary, in a sunny desert valley full of scattered bones, strong wind blowing dust",
+    "refs": [
+      "Ezekiel 37:4",
+      "Ezekiel 37:7",
+      "Ezekiel 37:10"
+    ]
+  },
+  {
+    "id": "prodigalino-piggerino",
+    "name": "Prodigalino Piggerino",
+    "say": "Prodigalino Pigherino",
+    "chant": "Prodigalino Piggerino! Spende tutto, vuole il cibo dei maiali, poi torna dal papà!",
+    "prompt": "a young man in torn fancy party clothes fused with a pig, staring hungrily at pig food in a muddy trough surrounded by pigs, a distant farmhouse on a hill at sunset",
+    "refs": [
+      "Luke 15:13",
+      "Luke 15:16",
+      "Luke 15:20"
+    ]
+  },
+  {
+    "id": "paulino-snakeshakino",
+    "name": "Paulino Snakeshakino",
+    "say": "Paolino Sneicsceichino",
+    "chant": "Paulino Snakeshakino! La vipera lo morde, lui la scuote nel fuoco, niente!",
+    "prompt": "a calm bearded man casually shaking a viper off his hand into a campfire, shipwrecked people watching in shock on a rainy island beach, a broken wooden ship in the background",
+    "refs": [
+      "Acts 28:3",
+      "Acts 28:5-6"
+    ]
+  },
+  {
+    "id": "davidino-dancerino",
+    "name": "Davidino Dancerino",
+    "say": "Deividino Denserino",
+    "chant": "Davidino Dancerino! Balla davanti al Signore con tutte le sue forze!",
+    "prompt": "a joyful king in a simple linen garment with a crown, dancing wildly with all his might, mid-spin, trumpets and a cheering crowd celebrating in an ancient city street",
+    "refs": [
+      "2 Samuel 6:14",
+      "2 Samuel 6:15"
+    ]
   }
 ]
