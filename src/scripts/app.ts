@@ -4,7 +4,7 @@
 // open with a chant before the verse (see video.ts).
 
 import type { Genre } from "./motion";
-import { Stage, loadClip, karaoke, popCaptions, drawStill, renderVideo, canExportVideo, beatsFor, type Part, type Playable } from "./video";
+import { Stage, loadClip, karaoke, popCaptions, fitWidth, drawStill, renderVideo, canExportVideo, beatsFor, type Part, type Playable } from "./video";
 import { VIBES, type Vibe } from "./satisfying";
 
 interface BookMeta {
@@ -341,6 +341,12 @@ function brainrotCard(): Card {
   return { ...pick(char.passages), kind: "brainrot", char };
 }
 
+/** One character's passages, in order, on repeat. */
+function characterSource(char: Character): Source {
+  let i = 0;
+  return async () => ({ ...char.passages[i++ % char.passages.length], kind: "brainrot", char });
+}
+
 /** Video-only feed: mostly brainrot characters, mixed with narrated passages. */
 function brainrotSource(): Source {
   return async () => (characters.length && (Math.random() < 0.7 || !mediaBooks().length) ? brainrotCard() : randomNarrated());
@@ -500,12 +506,28 @@ function pickVibe(): Vibe {
 
 /** Shrink a split card's passage until it fits the top half. */
 function fitText(card: Element) {
-  if (!card.classList.contains("split") || card.classList.contains("brainrot")) return;
+  if (card.classList.contains("brainrot")) return fitBrainrot(card as HTMLElement);
+  if (!card.classList.contains("split")) return;
   const body = card.querySelector<HTMLElement>(".card-body");
   const verse = body?.querySelector<HTMLElement>(".verse");
   if (!body || !verse) return;
   let size = parseFloat(getComputedStyle(verse).fontSize);
   while (body.scrollHeight > body.clientHeight + 1 && size > 13) {
+    size -= 1;
+    verse.style.fontSize = `${size}px`;
+  }
+}
+
+/** Brainrot cards: long names fit the width; a text-only verse stays inside the bottom panel. */
+function fitBrainrot(card: HTMLElement) {
+  const name = card.querySelector<HTMLElement>(".char-name");
+  if (name) fitWidth(name);
+  const body = card.querySelector<HTMLElement>(".card-body");
+  const verse = body?.querySelector<HTMLElement>(".verse");
+  if (!body || !verse) return;
+  const room = card.clientHeight * (card.classList.contains("split") ? 0.3 : 0.4);
+  let size = parseFloat(getComputedStyle(verse).fontSize);
+  while (body.offsetHeight > room && size > 12) {
     size -= 1;
     verse.style.fontSize = `${size}px`;
   }
@@ -1011,6 +1033,12 @@ async function route() {
     return mountFeed(forYou);
   }
   if (root === "books") return booksView();
+  if (root === "char") {
+    const char = characters.find((c) => c.id === id);
+    if (!char) return go("#/watch");
+    setTab("watch");
+    return mountFeed(createFeed(characterSource(char), { text: `🤌 ${char.name}`, back: "#/watch" }));
+  }
   if (root === "watch") {
     if (!characters.length && !mediaBooks().length) return go("#/");
     setTab("watch");

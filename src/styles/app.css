@@ -225,7 +225,10 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   position: absolute; z-index: 2; left: 0; right: 0; bottom: max(1.1rem, env(safe-area-inset-bottom));
   padding: 0 84px 0 20px; max-width: none;
 }
-.card.brainrot .card-body .verse { margin-bottom: 0.8rem; }
+.card.brainrot .card-body .verse {
+  margin-bottom: 0.8rem; padding: 0.5rem 0.7rem; border-radius: 10px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
 .card.brainrot .ref { margin-top: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
 
 /* genre palettes (cards, tiles, heroes) */

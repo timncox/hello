@@ -130,6 +130,17 @@ function chunkWords(part: Part) {
   return chunks.filter((c) => c.length);
 }
 
+/** Shrink an element's font until its content fits its width (long words like NOVECENTOSESSANTANOVE). */
+export function fitWidth(el: HTMLElement) {
+  el.style.fontSize = "";
+  if (!el.isConnected || !el.clientWidth) return;
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth + 1 && size > 14) {
+    size *= 0.92;
+    el.style.fontSize = `${size}px`;
+  }
+}
+
 export function popCaptions(parts: Part[]): Captions {
   const el = document.createElement("div");
   el.className = "pop-caption";
@@ -155,6 +166,7 @@ export function popCaptions(parts: Part[]): Captions {
       if (fresh) {
         shownKey = key;
         el.replaceChildren(...words.map((w) => Object.assign(document.createElement("span"), { textContent: w })));
+        fitWidth(el);
         if (words.length) el.animate([{ transform: "scale(0.55)", opacity: 0.4 }, { transform: "scale(1.12)", opacity: 1 }, { transform: "scale(1)" }], { duration: 200, easing: "ease-out" });
       }
       el.querySelectorAll("span").forEach((s, i) => s.classList.toggle("hot", i === hot));
@@ -457,7 +469,8 @@ function layout(ctx: CanvasRenderingContext2D, words: string[], font: (size: num
       x += width + space;
     });
     const lineH = size * leading;
-    if (lines.length * lineH <= maxH || size <= 26) return { size, lineH, lines };
+    const widest = Math.max(...lines.flat().map((x) => x.w));
+    if ((lines.length * lineH <= maxH && widest <= maxW) || size <= 20) return { size, lineH, lines };
     size -= 2;
   }
 }
