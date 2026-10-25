@@ -214,7 +214,62 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   font-family: "Anton", Impact, "Arial Black", sans-serif; text-transform: uppercase; color: #fff; line-height: 1.02;
   text-shadow: 3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000, 0 3px 0 #000, 0 -3px 0 #000, 3px 0 0 #000, -3px 0 0 #000, 0 8px 18px rgba(0,0,0,0.6);
 }
-.char-name { top: calc(max(0.6rem, env(safe-area-inset-top)) + 9.6rem); font-size: clamp(2.3rem, 10.5vw, 3.8rem); }
+.char-name { font-size: clamp(2.3rem, 10.5vw, 3.8rem); }
+.char-head {
+  position: absolute; z-index: 3; left: 12px; right: 76px; text-align: center;
+  top: calc(max(0.6rem, env(safe-area-inset-top)) + 9.6rem);
+}
+.char-head .char-name { position: static; }
+.collect-hint {
+  display: inline-block; margin-top: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 999px;
+  font: 700 0.8rem/1.2 system-ui, -apple-system, sans-serif; color: #fff;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.collect-hint:hover { text-decoration: none; }
+.collect-hint .done, .collect-hint.got .todo { display: none; }
+.collect-hint.got .done { display: inline; }
+.collect-hint.got { background: rgba(22,163,74,0.85); }
+.act.collect span { background: var(--accent); animation: hunt 1.6s ease-in-out infinite; }
+@keyframes hunt { 50% { transform: scale(1.1); box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); } }
+.feed-label.quest { background: color-mix(in srgb, var(--accent) 75%, #000); }
+.feed-label .label-text { color: #fff; }
+
+/* collected! celebration */
+.collect-pop {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 45%, #000), rgba(0,0,0,0.92));
+  animation: rise 0.3s ease-out both;
+}
+.cp-card { text-align: center; color: #fff; padding: 16px; max-width: 360px; }
+.cp-kicker {
+  font-family: "Anton", Impact, sans-serif; font-size: clamp(2.2rem, 11vw, 3rem); letter-spacing: 0.02em; color: #ffe14d;
+  text-shadow: 3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000; animation: pop 0.5s ease-out;
+}
+.cp-card img {
+  height: min(46dvh, 400px); width: auto; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 16px; margin: 0.6rem auto;
+  display: block; box-shadow: 0 0 0 4px #ffe14d, 0 20px 60px rgba(0,0,0,0.6); animation: spinIn 0.7s cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes spinIn { from { transform: scale(0.2) rotate(-25deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.cp-name { font-family: "Anton", Impact, sans-serif; font-size: clamp(1.4rem, 7vw, 1.9rem); line-height: 1.1; text-transform: uppercase; }
+.cp-card p { color: rgba(255,255,255,0.8); margin: 0.3rem 0 1rem; }
+.cp-card .sheet-actions { justify-content: center; }
+.confetti { position: absolute; top: -10%; font-style: normal; font-size: 1.6rem; animation: fall 2.4s ease-in forwards; pointer-events: none; }
+@keyframes fall { to { transform: translateY(120vh) rotate(540deg); } }
+
+/* collection page */
+.coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 0.55rem; margin-top: 1rem; }
+.coll-tile { display: grid; gap: 0.25rem; color: var(--fg); text-align: center; align-content: start; }
+.coll-tile .art { position: relative; border-radius: 12px; overflow: hidden; }
+.coll-tile:not(.got) .art::after {
+  content: "?"; position: absolute; inset: 0; display: grid; place-items: center;
+  font: 2.4rem "Anton", Impact, sans-serif; color: rgba(255,255,255,0.85); text-shadow: 0 2px 10px #000;
+}
+.coll-tile:hover { text-decoration: none; }
+.coll-tile img { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; display: block; background: #111; }
+.coll-tile:not(.got) img { filter: blur(7px) grayscale(1) brightness(0.35); transform: scale(1.1); }
+.coll-tile.got .art { box-shadow: 0 0 0 2px #ffe14d; }
+.coll-tile strong { font-size: 0.8rem; line-height: 1.15; }
+.coll-tile small { color: var(--muted); font-size: 0.68rem; line-height: 1.2; }
 .card.brainrot[data-phase="chant"] .char-name { color: #ffe14d; }
 .pop-caption {
   top: 52%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.28em;
@@ -333,5 +388,5 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .noscript { max-width: 680px; margin: 0 auto; padding: 5rem 16px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .verse, .burst, .act.like.on span, .sheet, .card.brainrot.active .char-frame { animation: none; }
+  .verse, .burst, .act.like.on span, .sheet, .card.brainrot.active .char-frame, .act.collect span, .confetti, .cp-card img { animation: none; }
 }

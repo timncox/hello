@@ -83,6 +83,7 @@ Adding a brainrot character:
 1. Add an entry to `src/data/characters.json`. Name: on the nose, English-recognizable words with Italian endings that say who and what (Jonahrino Whalerino, Froggo Pharaoggo), never a copy of an existing meme character. `say`: the same name spelled so the Italian voice pronounces it right (Gionarino Uèilerino). Chant: short, Italian, and accurate to the passage. Refs: verses from that story, ideally in narrated chapters.
 2. Generate art from the entry's `prompt` (vertical, "surreal hyperrealistic 3D render, Italian brainrot meme style, no text"), save as `public/brainrot/<id>.jpg` at 720x1280.
 3. `python scripts/make-chants.py --only <id>`, narrate its chapters (above), then `npm run bible`.
+- Collecting: a character is collected by tapping 🎯 Collect (Keep going) on its card and finishing every verse from there to the end of the chapter (min. 5 verses, running into the next chapter). Only cards that play to the end count. State: localStorage `scrollture:collected`; UI at `#/collection`; one character's passages at `#/char/<id>`.
 - God and Jesus are never turned into mascots; characters are people, animals, creatures and objects from the stories.
 
 - Scripture text is the Berean Standard Bible (public domain). Do NOT add NIV/ESV/NLT or other copyrighted text without a license.

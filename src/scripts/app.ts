@@ -464,7 +464,8 @@ stage.onMutedChange = (muted) => {
   document.querySelectorAll(".act.sound span").forEach((s) => (s.textContent = muted ? "🔇" : "🔊"));
 };
 
-stage.onEnd = () => {
+stage.onEnd = (play) => {
+  activeFeed?.quest?.cardFinished(play);
   if (!activeFeed || !(autoScroll || activeFeed.continuous)) {
     stage.current?.card.classList.add("looping");
     return false;
@@ -598,6 +599,118 @@ async function exportSheet(p: Card, play: Playable) {
   }
 }
 
+// ---------- brainrot collection ----------
+// Watching a character is free; collecting it means hitting Keep going and finishing the
+// rest of that section (to the end of the chapter, at least 5 verses) card by card.
+
+const collected: Record<string, number> = store.get("collected", {});
+const isCollected = (id: string) => !!collected[id];
+
+function questRange(b: BookMeta, c: number) {
+  return b.chapters[c - 1] ? `${b.refName} ${c}` : b.refName;
+}
+
+class Quest {
+  readonly done = new Set<string>();
+  private label?: HTMLElement;
+  private constructor(
+    readonly char: Character,
+    readonly book: BookMeta,
+    readonly title: string,
+    readonly need: Set<string>,
+  ) {}
+
+  /** From verse c:v to the end of the chapter, running into the next until at least 5 verses. */
+  static async start(char: Character, book: BookMeta, c: number, v: number) {
+    const chapters = await loadBook(book.id);
+    const need = new Set<string>();
+    let lastC = c;
+    for (let cc = c, vv = v; cc <= chapters.length; cc++, vv = 1) {
+      lastC = cc;
+      chapters[cc - 1].forEach((t, i) => i + 1 >= vv && t && need.add(`${cc}:${i + 1}`));
+      if (need.size >= 5) break;
+    }
+    return new Quest(char, book, lastC > c ? `${book.refName} ${c}–${lastC}` : `${book.refName} ${c}`, need);
+  }
+
+  bind(el: HTMLElement) {
+    this.label = el;
+    this.render();
+  }
+
+  render() {
+    if (!this.label) return;
+    this.label.textContent = isCollected(this.char.id)
+      ? `✅ ${this.char.name} collected`
+      : `🎯 ${this.char.name} · ${this.done.size}/${this.need.size}`;
+  }
+
+  cardFinished(play: Playable) {
+    const p = cardData.get(play.card)?.p;
+    if (!p || p.b !== this.book.id) return;
+    for (let v = p.v; v <= p.e; v++) if (this.need.has(`${p.c}:${v}`)) this.done.add(`${p.c}:${v}`);
+    this.render();
+    if (this.done.size === this.need.size && !isCollected(this.char.id)) collect(this.char);
+  }
+}
+
+function collect(char: Character) {
+  collected[char.id] = Date.now();
+  store.set("collected", collected);
+  document.querySelectorAll(`[data-char="${char.id}"]`).forEach((el) => el.classList.add("got"));
+  activeFeed?.quest?.render();
+  const was = stage.current;
+  stage.deactivate();
+  if (!stage.muted) new Audio(char.audio).play().catch(() => {});
+  navigator.vibrate?.([40, 60, 40]);
+  const n = Object.keys(collected).length;
+  const confetti = Array.from({ length: 24 }, (_, i) => {
+    const bit = h("i", { class: "confetti" }, pick(["🎉", "✨", "🤌", "🔥", "⭐"]));
+    bit.style.left = `${Math.random() * 100}%`;
+    bit.style.animationDelay = `${(i % 8) * 0.06}s`;
+    return bit;
+  });
+  const view = h("a", { class: "btn", href: "#/collection" }, "🤌 My collection");
+  const go = h("button", { class: "btn primary" }, "Keep going");
+  const pop = h(
+    "div",
+    { class: "collect-pop" },
+    ...confetti,
+    h("div", { class: "cp-card" }, h("div", { class: "cp-kicker" }, "COLLECTED!"), h("img", { src: char.image, alt: char.name }), h("div", { class: "cp-name" }, char.name), h("p", {}, `${n} of ${characters.length} brainrot collected`), h("div", { class: "sheet-actions" }, view, go)),
+  );
+  const close = () => {
+    pop.remove();
+    if (was && activeFeed) activeFeed.resume();
+  };
+  go.addEventListener("click", close);
+  view.addEventListener("click", () => pop.remove());
+  $("#app").append(pop);
+}
+
+function collectionView() {
+  setTab("watch");
+  const n = characters.filter((c) => isCollected(c.id)).length;
+  const ordered = [...characters].sort((a, b) => Number(isCollected(b.id)) - Number(isCollected(a.id)));
+  const tiles = ordered.map((c) => {
+    const got = isCollected(c.id);
+    const first = c.passages[0];
+    const b = bookById.get(first.b)!;
+    return h(
+      "a",
+      { class: `coll-tile${got ? " got" : ""}`, href: `#/char/${c.id}` },
+      h("div", { class: "art" }, h("img", { src: c.image, alt: got ? c.name : "Not collected yet", loading: "lazy" })),
+      h("strong", {}, got ? c.name : "???"),
+      h("small", {}, got ? "✅ Collected" : `🔍 Found in ${questRange(b, first.c)}`),
+    );
+  });
+  mountPage(
+    h("h1", {}, "🤌 Brainrot collection"),
+    h("p", { class: "muted" }, `${n} of ${characters.length} collected. Watch a character, hit 🎯 Collect, and finish the rest of the section to add it.`),
+    progressBar(n, characters.length),
+    h("div", { class: "coll-grid" }, ...tiles),
+  );
+}
+
 // ---------- cards ----------
 
 const versePart = (p: Card) => p.parts?.find((x) => x.kind === "verse");
@@ -645,12 +758,21 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     p.char ? h("a", { class: "chip", href: "#/watch" }, "🤌 Brainrot Bible") : null,
     theme ? h("a", { class: "chip", href: `#/theme/${theme.id}` }, `${theme.emoji} ${theme.name}`) : null,
   );
+  // On an uncollected character, Keep going becomes the way to collect it.
+  const hunting = p.char && !isCollected(p.char.id);
+  const playHref = `#/book/${b.id}/play/${p.c}/${p.v}${p.char ? `/collect/${p.char.id}` : ""}`;
+  const keepGoing = h(
+    "a",
+    { class: `act${hunting ? " collect" : ""}`, href: playHref, "aria-label": hunting ? "Collect this character" : "Keep going from here" },
+    h("span", {}, hunting ? "🎯" : "▶️"),
+    h("small", {}, hunting ? "Collect" : "Keep going"),
+  );
   const rail = h(
     "aside",
     { class: "rail" },
     likeBtn,
     h("a", { class: "act", href: `#/read/${b.id}/${p.c}/${p.v}`, "aria-label": "Read in context" }, h("span", {}, "📖"), h("small", {}, "Context")),
-    h("a", { class: "act", href: `#/book/${b.id}/play/${p.c}/${p.v}`, "aria-label": "Keep going from here" }, h("span", {}, "▶️"), h("small", {}, "Keep going")),
+    keepGoing,
     shareBtn,
     soundBtn,
     speedBtn,
@@ -673,7 +795,17 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
       "article",
       { class: `card brainrot video${split}`, "data-key": keyOf(p) },
       h("div", { class: "char-frame" }, fill, image),
-      h("div", { class: "char-name" }, p.char.name),
+      h(
+        "div",
+        { class: "char-head" },
+        h("div", { class: "char-name" }, p.char.name),
+        h(
+          "a",
+          { class: `collect-hint${isCollected(p.char.id) ? " got" : ""}`, href: playHref, "data-char": p.char.id },
+          h("span", { class: "todo" }, `🎯 Keep going through ${questRange(b, p.c)} to collect`),
+          h("span", { class: "done" }, "✅ Collected"),
+        ),
+      ),
       captions.el,
       h("div", { class: "card-body" }, verse ? null : h("blockquote", { class: "verse sm" }, p.text), ref, credit, chips),
       rail,
@@ -773,6 +905,8 @@ interface Feed {
   resume: () => void;
   /** Move on to the next card by itself when one finishes (reading a chapter in order). */
   continuous?: boolean;
+  /** Collecting a brainrot character: finish every verse of the section. */
+  quest?: Quest;
 }
 
 const cardData = new WeakMap<Element, { p: Card; play: Playable }>();
@@ -798,12 +932,13 @@ async function attachParts(p: Card) {
   if (parts.length) p.parts = parts;
 }
 
-function createFeed(source: Source, label?: { text: string; back: string }, continuous = false): Feed {
+function createFeed(source: Source, label?: { text: string; back: string; href?: string }, continuous = false, quest?: Quest): Feed {
   const scroller = h("div", { class: "feed", tabindex: "0" });
   const feed: Feed = {
     el: h("div", { class: "feed-wrap" }),
     scrollTop: 0,
     continuous,
+    quest,
     resume() {
       const i = Math.round(scroller.scrollTop / (scroller.clientHeight || 1));
       const data = scroller.children[i] && cardData.get(scroller.children[i]);
@@ -811,7 +946,9 @@ function createFeed(source: Source, label?: { text: string; back: string }, cont
     },
   };
   if (label) {
-    feed.el.append(h("div", { class: "feed-label" }, h("span", {}, label.text), h("a", { href: label.back, "aria-label": "Close" }, "✕")));
+    const text = label.href ? h("a", { class: "label-text", href: label.href }, label.text) : h("span", { class: "label-text" }, label.text);
+    feed.el.append(h("div", { class: `feed-label${quest ? " quest" : ""}` }, text, h("a", { href: label.back, "aria-label": "Close" }, "✕")));
+    quest?.bind(text);
   }
   feed.el.append(scroller);
 
@@ -1009,6 +1146,7 @@ function meView() {
     ),
     h("p", {}, `You've seen ${seen.toLocaleString()} of ${total.toLocaleString()} verses (${((seen / total) * 100).toFixed(1)}%). Gotta read 'em all.`),
     progressBar(seen, total),
+    h("p", {}, h("a", { class: "btn primary", href: "#/collection" }, `🤌 Brainrot collection · ${characters.filter((c) => isCollected(c.id)).length}/${characters.length}`)),
     vibesToggle(),
     h("h2", {}, "Liked"),
     ...(liked.length ? liked : [h("p", { class: "muted" }, "Double-tap a card or hit ❤️ to save it here.")]),
@@ -1023,7 +1161,7 @@ function go(hash: string) {
 
 async function route() {
   const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const [root, id, a, b, c] = parts;
+  const [root, id, a, b, c, x, y] = parts;
 
   if (activeFeed && activeFeed === forYou) forYou.scrollTop = $(".feed", forYou.el).scrollTop;
 
@@ -1042,10 +1180,12 @@ async function route() {
   if (root === "watch") {
     if (!characters.length && !mediaBooks().length) return go("#/");
     setTab("watch");
-    return mountFeed(createFeed(brainrotSource(), { text: "🤌 Brainrot Bible", back: "#/" }));
+    const n = characters.filter((ch) => isCollected(ch.id)).length;
+    return mountFeed(createFeed(brainrotSource(), { text: `🤌 Brainrot Bible · ${n}/${characters.length} collected`, back: "#/", href: "#/collection" }));
   }
   if (root === "themes") return themesView();
   if (root === "me") return meView();
+  if (root === "collection") return collectionView();
 
   if (root === "theme") {
     const theme = themes.find((t) => t.id === id);
@@ -1059,7 +1199,10 @@ async function route() {
     if (a === "play") {
       setTab("books");
       const label = b ? `▶️ ${book.name} ${b}:${c ?? 1} and on` : `▶️ ${book.name} in order`;
-      return mountFeed(createFeed(sequentialSource(book, Number(b) || 1, Number(c) || 1), { text: label, back: `#/read/${book.id}/${Number(b) || 1}` }, true));
+      const hunt = x === "collect" ? characters.find((ch) => ch.id === y) : undefined;
+      const quest = hunt ? await Quest.start(hunt, book, Number(b) || 1, Number(c) || 1) : undefined;
+      if (quest && !isCollected(hunt!.id)) toast(`🎯 Finish ${quest.title} to collect ${hunt!.name}`);
+      return mountFeed(createFeed(sequentialSource(book, Number(b) || 1, Number(c) || 1), { text: label, back: hunt ? `#/char/${hunt.id}` : `#/read/${book.id}/${Number(b) || 1}` }, true, quest));
     }
     if (a === "shuffle") {
       setTab("books");
