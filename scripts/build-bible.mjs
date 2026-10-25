@@ -145,19 +145,33 @@ await writeFile(
   JSON.stringify(themes.map(({ refs, ...t }) => ({ ...t, passages: refs.map((r) => resolveRef(r, lookup)) }))),
 );
 
+// Collector cards: rarity follows how long a character's section is to finish (from its
+// first passage to the end of the chapter, min. 5 verses, as the app's Collect quest does).
+function sectionLength(p) {
+  const chapters = books.find((b) => b.id === p.b).chapters;
+  let need = 0;
+  for (let c = p.c, v = p.v; c <= chapters.length; c++, v = 1) {
+    need += chapters[c - 1].filter((t, i) => i + 1 >= v && t).length;
+    if (need >= 5) break;
+  }
+  return need;
+}
+const rarityOf = (n) => (n >= 35 ? "legendary" : n >= 21 ? "epic" : n >= 13 ? "rare" : "common");
+
 const characters = JSON.parse(await readFile(join(ROOT, "src/data/characters.json"), "utf8"));
 const resolvedCharacters = [];
-for (const { id, name, chant, refs } of characters) {
+for (const { id, name, chant, type, refs } of characters) {
   const timing = join(ROOT, "public/brainrot", `${id}.json`);
   if (!existsSync(timing)) {
     console.warn(`Skipping ${id}: no chant yet (run scripts/make-chants.py)`);
     continue;
   }
   const { duration, words } = JSON.parse(await readFile(timing, "utf8"));
+  const passages = refs.map((r) => resolveRef(r, lookup));
   resolvedCharacters.push({
-    id, name, chant, image: `/brainrot/${id}.jpg`, audio: `/brainrot/${id}.mp3`,
-    chantDuration: duration, chantWords: words,
-    passages: refs.map((r) => resolveRef(r, lookup)),
+    id, name, chant, type, number: resolvedCharacters.length + 1, rarity: rarityOf(sectionLength(passages[0])),
+    image: `/brainrot/${id}.jpg`, audio: `/brainrot/${id}.mp3`,
+    chantDuration: duration, chantWords: words, passages,
   });
 }
 await writeFile(join(OUT, "characters.json"), JSON.stringify(resolvedCharacters));

@@ -4,6 +4,7 @@
     "name": "Jonahrino Whalerino",
     "say": "Gionarino Uèilerino",
     "chant": "Jonahrino Whalerino! Jonahrino Whalerino! Inghiottito dal pescione, tre giorni nel pancione!",
+    "type": "🌊 Sea",
     "prompt": "a giant blue whale fused with an old wooden Mediterranean fishing boat, a small bearded man in a brown robe (the prophet Jonah) peeking out of the whale's open mouth looking shocked, the whale wears chunky white sneakers on little legs, stormy sea",
     "refs": [
       "Jonah 1:17",
@@ -17,6 +18,7 @@
     "name": "Samsonini Jawbonini",
     "say": "Semsonini Gioboníni",
     "chant": "Samsonini Jawbonini! Samsonini Jawbonini! Con la mascella d'asino, mille nemici giù!",
+    "type": "💪 Strength",
     "prompt": "a hulking muscular man with extremely long flowing hair whose head is a giant donkey jawbone with a toothy grin, wearing ancient sandals and gym shorts, flexing, desert battlefield",
     "refs": [
       "Judges 15:15-16",
@@ -30,6 +32,7 @@
     "name": "Donkino Talkino",
     "say": "Donchino Tochino",
     "chant": "Donkino Talkino! L'asina parla, il profeta non capisce niente!",
+    "type": "🐾 Beast",
     "prompt": "a grey donkey wearing sunglasses and a gold chain, talking into a microphone with its mouth wide open, a shocked bearded ancient prophet riding it, a glowing angel with a sword standing in the dirt road behind",
     "refs": [
       "Numbers 22:28",
@@ -42,6 +45,7 @@
     "name": "Goliatho Bonkatello",
     "say": "Goliatto Boncatello",
     "chant": "Goliatho Bonkatello! Grande grande grande, un sassolino in fronte, bum! Giù per terra!",
+    "type": "⚔️ Battle",
     "prompt": "an enormous giant warrior in bronze armor with a comically tiny head, a small pebble bouncing off his forehead, a tiny shepherd boy with a sling at his feet, valley battlefield with two armies watching",
     "refs": [
       "1 Samuel 17:4",
@@ -55,6 +59,7 @@
     "name": "Baldini Bearini",
     "say": "Boldini Berini",
     "chant": "Baldini Bearini! Non chiamarlo testa pelata, arrivano due orse!",
+    "type": "🐻 Bear",
     "prompt": "a bald old prophet in robes whose shiny bald head is a mirrored disco ball, two big brown bears in matching tracksuits standing behind him like bodyguards, forest road",
     "refs": [
       "2 Kings 2:23-24",
@@ -66,6 +71,7 @@
     "name": "Elijahtti Chariotti",
     "say": "Elaigiatti Ciariotti",
     "chant": "Elijahtti Chariotti! Carro di fuoco, cavalli di fuoco, vrum vrum, dritto in cielo!",
+    "type": "🔥 Fire",
     "prompt": "an old prophet with a wild white beard riding a flaming red Italian scooter fused with a chariot, pulled by horses made of fire, flying up into the sky inside a whirlwind",
     "refs": [
       "2 Kings 2:11",
@@ -78,6 +84,7 @@
     "name": "Moobuchadnezzar Grassolini",
     "say": "Mubucadnezzar Grassolini",
     "chant": "Moobuchadnezzar Grassolini! Re di Babilonia, mangia l'erba come un bue!",
+    "type": "👑 Royal",
     "prompt": "an ancient Babylonian king with a jeweled crown and long feathery hair, with the body of an ox, grazing on grass in a field, long bird-like claws, a ruined golden palace behind",
     "refs": [
       "Daniel 4:33",
@@ -90,6 +97,7 @@
     "name": "Lionini Napini",
     "say": "Laionini Nepini",
     "chant": "Lionini Napini! Daniele nella fossa, ma l'angelo chiude la bocca ai leoni!",
+    "type": "🦁 Beast",
     "prompt": "a huge sleepy lion wearing a nightcap and striped pajamas, snoring on a pillow, a glowing angel gently holding its mouth shut, a calm man in a robe sitting beside it inside a stone pit",
     "refs": [
       "Daniel 6:16",
@@ -102,6 +110,7 @@
     "name": "Froggo Pharaoggo",
     "say": "Froggo Feraoggo",
     "chant": "Froggo Pharaoggo! Rane nel letto, rane nel forno, rane dappertutto! Cra cra cra!",
+    "type": "🐸 Plague",
     "prompt": "a giant green frog wearing an Egyptian pharaoh headdress and golden collar, sitting on a royal bed, hundreds of small frogs everywhere in an Egyptian palace bedroom, on the bed, in bread ovens and bowls",
     "refs": [
       "Exodus 8:3",
@@ -114,6 +123,7 @@
     "name": "Methuselino Oldissimo",
     "say": "Metuselino Oldissimo",
     "chant": "Methuselino Oldissimo! Novecentosessantanove anni, troppe candeline!",
+    "type": "⏳ Ancient",
     "prompt": "an extremely ancient man with a white beard so long it wraps around the whole room, wearing a party hat, holding an enormous birthday cake covered in hundreds of lit candles, flames and smoke",
     "refs": [
       "Genesis 5:27",
@@ -125,6 +135,7 @@
     "name": "Leviathan Linguini",
     "say": "Levaiatan Linguini",
     "chant": "Leviathan Linguini! Fuoco dalla bocca, fumo dal naso, il mare bolle come una pentola!",
+    "type": "🌊 Sea",
     "prompt": "a colossal sea dragon whose body is made of giant spaghetti noodles and tomato sauce, breathing fire from its mouth and smoke from its nostrils, the sea boiling around it like a giant cooking pot",
     "refs": [
       "Job 41:1",
@@ -137,6 +148,7 @@
     "name": "Shortino Sycamorino",
     "say": "Sciortino Sicamorino",
     "chant": "Shortino Sycamorino! Piccolo piccolino, sale sul sicomoro per vedere Gesù!",
+    "type": "🌳 Nature",
     "prompt": "a very short man fused with a sycamore tree, his arms are branches and his hair is leaves, peeking over a crowd on an ancient Middle Eastern city street",
     "refs": [
       "Luke 19:3-4",
@@ -149,6 +161,7 @@
     "name": "Snoozino Windowino",
     "say": "Snuzino Uindouino",
     "chant": "Snoozino Windowino! Paolo predica, predica, predica, lui dorme e cade dalla finestra!",
+    "type": "💤 Sleepy",
     "prompt": "a sleepy young man fused with a wooden window frame, snoring as he falls out of a third-floor window at night, oil lamps glowing in the upper room behind him",
     "refs": [
       "Acts 20:9",
@@ -161,6 +174,7 @@
     "name": "Peterino Sinkerino",
     "say": "Piterino Sinkerino",
     "chant": "Peterino Sinkerino! Cammina sull'acqua, guarda il vento, glu glu glu!",
+    "type": "🌊 Sea",
     "prompt": "a bearded ancient fisherman riding a surfboard that is a giant fish, on a stormy sea at night with huge waves and wind, his face panicking as he starts to sink",
     "refs": [
       "Matthew 14:29",
@@ -173,6 +187,7 @@
     "name": "Noahzino Arkarino",
     "say": "Noazino Arcarino",
     "chant": "Noahzino Arkarino! Animali a due a due, piove per quaranta giorni!",
+    "type": "🌧️ Flood",
     "prompt": "an old bearded man whose body is a wooden ark boat, giraffes elephants and lions peeking out of windows in his chest, standing in a flood with a rainbow and a dove carrying an olive leaf",
     "refs": [
       "Genesis 7:9",
@@ -186,6 +201,7 @@
     "name": "Mosessino Seasplittino",
     "say": "Mosessino Sisplittino",
     "chant": "Mosessino Seasplittino! Alza il bastone, e il mare si apre in due!",
+    "type": "🌊 Sea",
     "prompt": "a bearded man in robes holding a giant staff shaped like a zipper, unzipping the sea into two towering walls of water, fish staring out of the water walls, a dry seabed path",
     "refs": [
       "Exodus 14:21",
@@ -198,6 +214,7 @@
     "name": "Saltina Lookbackina",
     "say": "Soltina Lucbechina",
     "chant": "Saltina Lookbackina! Non guardare indietro... troppo tardi, è sale!",
+    "type": "🧂 Salt",
     "prompt": "a statue-like elderly woman in a long modest robe and headscarf, carved entirely from sparkling white salt crystals, a giant silver salt-shaker lid sitting on her head like a hat, glancing back over her shoulder with a surprised expression, a distant ancient city on the horizon with smoke rising",
     "refs": [
       "Genesis 19:26",
@@ -210,6 +227,7 @@
     "name": "Jacobino Ladderino",
     "say": "Gecobino Ledderino",
     "chant": "Jacobino Ladderino! Dorme su una pietra, angeli su e giù per la scala!",
+    "type": "✨ Vision",
     "prompt": "a sleepy man in robes with a stone as his pillow, his body fused with a golden ladder reaching up into glowing clouds, tiny angels climbing up and down the ladder",
     "refs": [
       "Genesis 28:11-12",
@@ -222,6 +240,7 @@
     "name": "Josephino Coatcolorino",
     "say": "Giosefino Cotcolorino",
     "chant": "Josephino Coatcolorino! Tunica colorata, buttato nel pozzo, poi capo d'Egitto!",
+    "type": "🌈 Dreamer",
     "prompt": "a young man whose whole body is a dazzling rainbow-colored ornate robe with sleeves flapping like wings, standing at the edge of a dry well, an Egyptian palace and pyramids behind him",
     "refs": [
       "Genesis 37:3",
@@ -235,6 +254,7 @@
     "name": "Jerichino Wallcrashino",
     "say": "Gerichino Uolcrescino",
     "chant": "Jerichino Wallcrashino! Sette giri, trombe e grida, e le mura crollano!",
+    "type": "📯 Sound",
     "prompt": "a giant ram's horn trumpet with little legs and an angry face, blasting a visible sound wave that knocks down massive ancient stone city walls, marching priests behind it",
     "refs": [
       "Joshua 6:15-16",
@@ -246,6 +266,7 @@
     "name": "Raveno Deliverino",
     "say": "Reiveno Deliverino",
     "chant": "Raveno Deliverino! Consegna a domicilio: pane e carne, mattina e sera!",
+    "type": "🛵 Delivery",
     "prompt": "a black raven wearing a food delivery uniform and cap, riding a tiny scooter with an insulated delivery bag full of bread and meat, a bearded prophet waiting by a brook in a desert ravine",
     "refs": [
       "1 Kings 17:4",
@@ -257,6 +278,7 @@
     "name": "Furnacino Chillino",
     "say": "Fernesino Cillino",
     "chant": "Furnacino Chillino! Fornace sette volte più calda, ma nemmeno l'odore del fuoco!",
+    "type": "🔥 Fire",
     "prompt": "three young men in robes relaxing in beach chairs with sunglasses and drinks inside a blazing furnace, flames everywhere around them, completely unburned, a shocked ancient king staring through the furnace door",
     "refs": [
       "Daniel 3:17-18",
@@ -269,6 +291,7 @@
     "name": "Babelino Towerino",
     "say": "Beibelino Tauerino",
     "chant": "Babelino Towerino! Una torre fino al cielo, poi tutti parlano lingue diverse!",
+    "type": "🗣️ Babble",
     "prompt": "a tall spiral brick tower with a giant face and many mouths each babbling in different languages with speech bubbles full of scribbles, reaching into the clouds, confused builders at its base",
     "refs": [
       "Genesis 11:4",
@@ -281,6 +304,7 @@
     "name": "Lazzarino Wakeupino",
     "say": "Lazzarino Ueicappino",
     "chant": "Lazzarino Wakeupino! Quattro giorni nella tomba, poi esce fuori tutto bendato!",
+    "type": "✨ Miracle",
     "prompt": "a man wrapped head to toe in white linen grave cloths like a mummy, stepping out of a rock-cut tomb, stretching and yawning like he just woke up, holding a ringing alarm clock",
     "refs": [
       "John 11:39",
@@ -292,6 +316,7 @@
     "name": "Breadino Fishino",
     "say": "Bredino Fiscino",
     "chant": "Breadino Fishino! Cinque pani, due pesci, cinquemila persone sazie!",
+    "type": "🍞 Miracle",
     "prompt": "a cheerful creature made of round bread loaves with two fish for arms, multiplying into hundreds of copies of itself, a huge crowd sitting on green grass on a hillside, baskets overflowing with leftovers",
     "refs": [
       "John 6:9",
@@ -304,6 +329,7 @@
     "name": "Skeletrino Rattlerino",
     "say": "Scheletrino Retlerino",
     "chant": "Skeletrino Rattlerino! Ossa secche, clack clack clack, tornano in vita!",
+    "type": "🦴 Bones",
     "prompt": "a goofy dancing skeleton of dry bones rattling and snapping back together mid-air, cartoonish and not scary, in a sunny desert valley full of scattered bones, strong wind blowing dust",
     "refs": [
       "Ezekiel 37:4",
@@ -316,6 +342,7 @@
     "name": "Prodigalino Piggerino",
     "say": "Prodigalino Pigherino",
     "chant": "Prodigalino Piggerino! Spende tutto, vuole il cibo dei maiali, poi torna dal papà!",
+    "type": "🐖 Mud",
     "prompt": "a young man in torn fancy party clothes fused with a pig, staring hungrily at pig food in a muddy trough surrounded by pigs, a distant farmhouse on a hill at sunset",
     "refs": [
       "Luke 15:13",
@@ -328,6 +355,7 @@
     "name": "Paulino Snakeshakino",
     "say": "Paolino Sneicsceichino",
     "chant": "Paulino Snakeshakino! La vipera lo morde, lui la scuote nel fuoco, niente!",
+    "type": "🐍 Venom",
     "prompt": "a calm bearded man casually shaking a viper off his hand into a campfire, shipwrecked people watching in shock on a rainy island beach, a broken wooden ship in the background",
     "refs": [
       "Acts 28:3",
@@ -339,6 +367,7 @@
     "name": "Davidino Dancerino",
     "say": "Deividino Denserino",
     "chant": "Davidino Dancerino! Balla davanti al Signore con tutte le sue forze!",
+    "type": "💃 Dance",
     "prompt": "a joyful king in a simple linen garment with a crown, dancing wildly with all his might, mid-spin, trumpets and a cheering crowd celebrating in an ancient city street",
     "refs": [
       "2 Samuel 6:14",

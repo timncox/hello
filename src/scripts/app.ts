@@ -6,6 +6,7 @@
 import type { Genre } from "./motion";
 import { Stage, loadClip, karaoke, popCaptions, fitWidth, drawStill, renderVideo, canExportVideo, beatsFor, type Part, type Playable } from "./video";
 import { VIBES, type Vibe } from "./satisfying";
+import { tradingCard, lockedCard, cardImage, type CardContext } from "./cards";
 
 interface BookMeta {
   id: string;
@@ -34,6 +35,9 @@ interface Character {
   id: string;
   name: string;
   chant: string;
+  type: string; // card type, e.g. "🌊 Sea"
+  number: number; // card number in the set
+  rarity: "common" | "rare" | "epic" | "legendary";
   image: string;
   audio: string;
   chantDuration: number; // centiseconds
@@ -654,6 +658,71 @@ class Quest {
   }
 }
 
+function cardContext(char: Character): CardContext {
+  const first = char.passages[0];
+  return {
+    total: characters.length,
+    foundIn: questRange(bookById.get(first.b)!, first.c),
+    verseRef: refOf(first),
+    translation: index.translation.id,
+    collectedAt: collected[char.id],
+    site: $(".logo").textContent ?? "",
+  };
+}
+
+async function saveCard(char: Character) {
+  try {
+    const blob = await cardImage(char, cardContext(char));
+    const file = new File([blob], `${char.id}-card.png`, { type: "image/png" });
+    if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text: `I collected ${char.name} on Scrollture 🤌` });
+    else {
+      const a = h("a", { href: URL.createObjectURL(blob), download: file.name });
+      a.click();
+      toast("💾 Card saved");
+    }
+  } catch (err) {
+    if ((err as Error).name !== "AbortError") toast("⚠️ Couldn't save the card");
+  }
+}
+
+/** Full-screen card: tilt it, tap to flip, save or share it. */
+function cardViewer(char: Character, opts: { kicker?: string; onClose?: () => void } = {}) {
+  const save = h("button", { class: "btn" }, "💾 Save card");
+  const watch = h("a", { class: "btn", href: `#/char/${char.id}` }, "▶️ Watch");
+  const done = h("button", { class: "btn primary" }, opts.kicker ? "Keep going" : "Close");
+  const card = tradingCard(char, cardContext(char), { interactive: true });
+  const confetti = opts.kicker
+    ? Array.from({ length: 24 }, (_, i) => {
+        const bit = h("i", { class: "confetti" }, pick(["🎉", "✨", "🤌", "🔥", "⭐"]));
+        bit.style.left = `${Math.random() * 100}%`;
+        bit.style.animationDelay = `${(i % 8) * 0.06}s`;
+        return bit;
+      })
+    : [];
+  const pop = h(
+    "div",
+    { class: `collect-pop${opts.kicker ? " reveal" : ""}` },
+    ...confetti,
+    h(
+      "div",
+      { class: "cp-card" },
+      opts.kicker ? h("div", { class: "cp-kicker" }, opts.kicker) : null,
+      h("div", { class: "cp-stage" }, card),
+      h("p", { class: "cp-hint" }, "Tap the card to flip it"),
+      h("div", { class: "sheet-actions" }, save, opts.kicker ? null : watch, done),
+    ),
+  );
+  const close = () => {
+    pop.remove();
+    opts.onClose?.();
+  };
+  save.addEventListener("click", () => saveCard(char));
+  done.addEventListener("click", close);
+  watch.addEventListener("click", () => pop.remove());
+  pop.addEventListener("click", (e) => e.target === pop && close());
+  $("#app").append(pop);
+}
+
 function collect(char: Character) {
   collected[char.id] = Date.now();
   store.set("collected", collected);
@@ -664,48 +733,33 @@ function collect(char: Character) {
   if (!stage.muted) new Audio(char.audio).play().catch(() => {});
   navigator.vibrate?.([40, 60, 40]);
   const n = Object.keys(collected).length;
-  const confetti = Array.from({ length: 24 }, (_, i) => {
-    const bit = h("i", { class: "confetti" }, pick(["🎉", "✨", "🤌", "🔥", "⭐"]));
-    bit.style.left = `${Math.random() * 100}%`;
-    bit.style.animationDelay = `${(i % 8) * 0.06}s`;
-    return bit;
+  cardViewer(char, {
+    kicker: `${char.rarity === "legendary" ? "LEGENDARY! " : ""}CARD ${n}/${characters.length} COLLECTED!`,
+    onClose: () => was && activeFeed?.resume(),
   });
-  const view = h("a", { class: "btn", href: "#/collection" }, "🤌 My collection");
-  const go = h("button", { class: "btn primary" }, "Keep going");
-  const pop = h(
-    "div",
-    { class: "collect-pop" },
-    ...confetti,
-    h("div", { class: "cp-card" }, h("div", { class: "cp-kicker" }, "COLLECTED!"), h("img", { src: char.image, alt: char.name }), h("div", { class: "cp-name" }, char.name), h("p", {}, `${n} of ${characters.length} brainrot collected`), h("div", { class: "sheet-actions" }, view, go)),
-  );
-  const close = () => {
-    pop.remove();
-    if (was && activeFeed) activeFeed.resume();
-  };
-  go.addEventListener("click", close);
-  view.addEventListener("click", () => pop.remove());
-  $("#app").append(pop);
 }
 
 function collectionView() {
   setTab("watch");
   const n = characters.filter((c) => isCollected(c.id)).length;
-  const ordered = [...characters].sort((a, b) => Number(isCollected(b.id)) - Number(isCollected(a.id)));
+  const ordered = [...characters].sort((a, b) => Number(isCollected(b.id)) - Number(isCollected(a.id)) || a.number - b.number);
   const tiles = ordered.map((c) => {
-    const got = isCollected(c.id);
-    const first = c.passages[0];
-    const b = bookById.get(first.b)!;
-    return h(
-      "a",
-      { class: `coll-tile${got ? " got" : ""}`, href: `#/char/${c.id}` },
-      h("div", { class: "art" }, h("img", { src: c.image, alt: got ? c.name : "Not collected yet", loading: "lazy" })),
-      h("strong", {}, got ? c.name : "???"),
-      h("small", {}, got ? "✅ Collected" : `🔍 Found in ${questRange(b, first.c)}`),
-    );
+    if (!isCollected(c.id)) {
+      const first = c.passages[0];
+      return h(
+        "a",
+        { class: "coll-tile", href: `#/char/${c.id}` },
+        lockedCard(characters.length, c.number),
+        h("small", {}, `🔍 Found in ${questRange(bookById.get(first.b)!, first.c)}`),
+      );
+    }
+    const tile = h("button", { class: "coll-tile got", "aria-label": `View ${c.name} card` }, tradingCard(c, cardContext(c)));
+    tile.addEventListener("click", () => cardViewer(c));
+    return tile;
   });
   mountPage(
-    h("h1", {}, "🤌 Brainrot collection"),
-    h("p", { class: "muted" }, `${n} of ${characters.length} collected. Watch a character, hit 🎯 Collect, and finish the rest of the section to add it.`),
+    h("h1", {}, "🤌 Brainrot cards"),
+    h("p", { class: "muted" }, `${n} of ${characters.length} collected. Watch a character, hit 🎯 Collect, and finish the rest of the section to earn its card.`),
     progressBar(n, characters.length),
     h("div", { class: "coll-grid" }, ...tiles),
   );
