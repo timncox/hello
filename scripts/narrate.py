@@ -35,10 +35,14 @@ align = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(align)
 
 
+# Where the audio host's file names differ from title-cased USFM.
+CODE_OVERRIDES = {"TIT": "Tts"}
+
+
 def audio_path(num: int, chapter: int, voice: str) -> str:
     usfm = CODES[num - 1]
     first = next(i for i, ch in enumerate(usfm) if ch.isalpha())
-    code = usfm[: first + 1] + usfm[first + 1 :].lower()  # GEN -> Gen, 1SA -> 1Sa
+    code = CODE_OVERRIDES.get(usfm) or usfm[: first + 1] + usfm[first + 1 :].lower()  # GEN -> Gen, 1SA -> 1Sa
     return f"/audio/{voice}/BSB_{num:02d}_{code}_{chapter:03d}.mp3"
 
 
