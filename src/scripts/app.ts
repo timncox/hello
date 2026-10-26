@@ -461,7 +461,7 @@ function heartBurst(card: HTMLElement, x: number, y: number) {
 // ---------- playback ----------
 
 const stage = new Stage();
-let autoScroll = store.get("autoplay", true); // on by default; hold a card to stop and loop it
+let autoScroll = store.get("autoplay", false); // off by default (cards loop); ⏩ Auto or holding a card turns it on
 
 stage.onMutedChange = (muted) => {
   $("#app").classList.toggle("muted", muted);
@@ -491,7 +491,11 @@ function setAuto(on: boolean, message?: string) {
   if (!on && activeFeed) activeFeed.continuous = false;
   document.querySelectorAll(".card.looping").forEach((el) => el.classList.remove("looping"));
   if (!on) stage.current?.card.classList.add("looping");
-  toast(message ?? (on ? "⏩ Autoplay on" : "🔁 Autoplay off: cards loop"));
+  document.querySelectorAll(".act.auto").forEach((el) => {
+    el.classList.toggle("on", on);
+    el.setAttribute("aria-pressed", String(on));
+  });
+  toast(message ?? (on ? "⏩ Autoplay on: verse after verse" : "🔁 Autoplay off: cards loop"));
 }
 
 const toggleAuto = () => setAuto(!autoScroll);
@@ -804,6 +808,13 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
 
   const speedBtn = h("button", { class: "act speed", "aria-label": "Playback speed" }, h("span", {}, speedLabel()), h("small", {}, "Speed"));
   speedBtn.addEventListener("click", cycleSpeed);
+  const autoBtn = h(
+    "button",
+    { class: `act auto${autoScroll ? " on" : ""}`, "aria-label": "Autoplay: move on to the next card", "aria-pressed": String(autoScroll) },
+    h("span", {}, "⏩"),
+    h("small", {}, "Auto"),
+  );
+  autoBtn.addEventListener("click", toggleAuto);
 
   const pill = isVideo ? h("button", { class: "sound-pill" }, "🔇 Tap for sound") : null;
   pill?.addEventListener("click", () => stage.setMuted(false));
@@ -836,6 +847,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     shareBtn,
     soundBtn,
     speedBtn,
+    autoBtn,
   );
   const vibeCanvas = vibesOn ? (h("canvas", { class: "vibe", "aria-hidden": "true" }) as HTMLCanvasElement) : null;
   const overlay = [vibeCanvas, pill, h("div", { class: "pause-icon", "aria-hidden": "true" }, "▶"), h("div", { class: "playbar" }, progress)];
@@ -906,7 +918,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
     vibe: vibeCanvas ? { canvas: vibeCanvas, kind: pickVibe(), hue: Math.random() * 360, beats: beatsFor(p.parts ?? [], p.text) } : undefined,
   };
 
-  // Hold: stop autoplay and loop this verse (hold again to resume).
+  // Hold: toggle autoplay (off = loop this verse).
   let holdTimer = 0;
   let held = false;
   let startX = 0;
@@ -921,7 +933,7 @@ function renderCard(p: Card): { el: HTMLElement; play: Playable } {
       held = true;
       navigator.vibrate?.(30);
       if (autoScroll) setAuto(false, "🔁 Looping this verse. Hold again for autoplay");
-      else setAuto(true, "⏩ Autoplay on");
+      else setAuto(true);
       if (stage.current === play && stage.paused) stage.togglePause();
     }, 450);
   });
@@ -1304,9 +1316,9 @@ async function start() {
     return;
   }
   touchStreak();
-  if (!store.get("tip-hold", false)) {
-    store.set("tip-hold", true);
-    setTimeout(() => toast("Tip: hold any card to stop autoplay and loop it"), 2500);
+  if (!store.get("tip-auto", false)) {
+    store.set("tip-auto", true);
+    setTimeout(() => toast("Tip: tap ⏩ Auto to keep listening, verse after verse"), 2500);
   }
   renderStats();
   $("#app").classList.add("muted");

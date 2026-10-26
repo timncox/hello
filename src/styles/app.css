@@ -112,6 +112,12 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 }
 .act:active span { transform: scale(0.88); }
 .act small { font-size: 0.7rem; font-weight: 700; opacity: 0.9; }
+@media (max-height: 760px) {
+  /* seven rail buttons: tighten them so the column fits under the top bar */
+  .rail { gap: 0.55rem; }
+  .act span { width: 42px; height: 42px; font-size: 1.15rem; }
+  .act small { font-size: 0.62rem; }
+}
 .act.like span { filter: grayscale(1) brightness(1.6); }
 .act.like.on span { filter: none; background: rgba(255,255,255,0.22); animation: pop 0.35s ease-out; }
 @keyframes pop { 50% { transform: scale(1.25); } }
@@ -163,6 +169,8 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 }
 .card.split.looping::before { bottom: auto; top: calc(56% + 0.6rem); }
 .act.speed span { font-size: 1rem; font-weight: 800; font-family: var(--font); }
+.act.auto span { filter: grayscale(1) brightness(1.4); }
+.act.auto.on span { filter: none; background: var(--accent); }
 
 .card.end { background: linear-gradient(160deg, #111, #333); text-align: center; }
 
