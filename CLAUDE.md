@@ -64,7 +64,7 @@ src/scripts/app.ts         # all app logic: feed sources, cards, routing (#/book
 src/scripts/video.ts       # video cards: narration playback, word-synced captions, export to MP4/WebM
 src/scripts/motion.ts      # animated canvas backgrounds, one look per genre
 src/scripts/cards.ts       # brainrot collector cards: DOM card (holo, tilt, flip), locked back, PNG export
-src/scripts/satisfying.ts  # split-screen "oddly satisfying" loops synced to word beats (ring, stack, fireworks, sand, spiro, pendulum)
+src/scripts/satisfying.ts  # split-screen "oddly satisfying" loops synced to word beats (ring, stack, fireworks, sand, spiro, pendulum, marble, escape, cradle, bubble, plinko, press)
 src/styles/app.css         # app styles (genre gradients, cards, pages)
 src/data/themes.json       # curated themes: references only, e.g. "Romans 8:38-39"
 scripts/build-bible.mjs    # `npm run bible`: regenerates public/bible/ from the source text + themes.json
