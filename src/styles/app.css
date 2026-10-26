@@ -294,8 +294,10 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 }
 .tc-top { display: flex; justify-content: space-between; align-items: center; font: 700 0.75em/1 system-ui, sans-serif; }
 .tc-gem { color: var(--f1); font-size: 1.15em; }
-.tc-art { flex: 1; min-height: 0; border-radius: 3cqw; overflow: hidden; border: 0.7cqw solid var(--f1); }
-.tc-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; display: block; }
+.tc-art { flex: 1; min-height: 0; border-radius: 3cqw; overflow: hidden; border: 0.7cqw solid var(--f1); position: relative; background: #000; }
+.tc-art img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.tc-art .tc-fill { object-fit: cover; filter: blur(3cqw) brightness(0.65); transform: scale(1.15); }
+.tc-art .tc-img { object-fit: contain; }
 .tc-name { font-family: "Anton", Impact, sans-serif; font-size: 1.45em; line-height: 1.02; text-transform: uppercase; text-align: center; }
 .tc-type { display: flex; justify-content: space-between; font: 700 0.7em/1.1 system-ui, sans-serif; opacity: 0.92; }
 .tc-rarity { color: var(--f1); text-transform: uppercase; letter-spacing: 0.06em; }

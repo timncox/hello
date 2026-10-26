@@ -73,16 +73,23 @@ function interactive(card: HTMLElement, flippable: boolean) {
 
 export function tradingCard(c: CardCharacter, ctx: CardContext, opts: { interactive?: boolean } = {}) {
   const r = RARITY[c.rarity];
+  // The art is 9:16; show all of it, over a blurred copy that fills the rest of the window.
   const img = document.createElement("img");
   img.src = c.image;
   img.alt = c.name;
   img.loading = "lazy";
+  img.className = "tc-img";
+  const fill = document.createElement("img");
+  fill.src = c.image;
+  fill.alt = "";
+  fill.loading = "lazy";
+  fill.className = "tc-fill";
   const stats = el("div", "tc-stats", ...statsFor(c).map((s) => el("div", "", el("b", "", String(s.value)), el("small", "", s.label))));
   const front = el(
     "div",
     "tc-face tc-front",
     el("div", "tc-top", el("span", "tc-num", num(c, ctx.total)), el("span", "tc-gem", r.gem)),
-    el("div", "tc-art", img),
+    el("div", "tc-art", fill, img),
     el("div", "tc-name", c.name),
     el("div", "tc-type", el("span", "", c.type), el("span", "tc-rarity", r.label)),
     stats,
@@ -179,13 +186,20 @@ export async function cardImage(c: CardCharacter, ctx0: CardContext): Promise<Bl
   ctx.font = `700 40px system-ui, sans-serif`;
   ctx.fillText(r.gem, CW - 56, 70);
 
-  // art (cover)
-  const ax = 48, ay = 106, aw = CW - 96, ah = 560;
+  // art: all of it, over a blurred copy that fills the window
+  const ax = 48, ay = 106, aw = CW - 96, ah = 630;
   ctx.save();
   rr(ctx, ax, ay, aw, ah, 18);
   ctx.clip();
-  const s = Math.max(aw / img.naturalWidth, ah / img.naturalHeight);
-  ctx.drawImage(img, ax + (aw - img.naturalWidth * s) / 2, ay + (ah - img.naturalHeight * s) * 0.4, img.naturalWidth * s, img.naturalHeight * s);
+  const cover = Math.max(aw / img.naturalWidth, ah / img.naturalHeight) * 1.15;
+  ctx.filter = "blur(24px)";
+  const blurred = ctx.filter === "blur(24px)"; // Safari < 18 ignores canvas filters
+  ctx.drawImage(img, ax + (aw - img.naturalWidth * cover) / 2, ay + (ah - img.naturalHeight * cover) / 2, img.naturalWidth * cover, img.naturalHeight * cover);
+  ctx.filter = "none";
+  ctx.fillStyle = blurred ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.7)";
+  ctx.fillRect(ax, ay, aw, ah);
+  const s = Math.min(aw / img.naturalWidth, ah / img.naturalHeight);
+  ctx.drawImage(img, ax + (aw - img.naturalWidth * s) / 2, ay + (ah - img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s);
   ctx.restore();
   ctx.strokeStyle = r.frame[0];
   ctx.lineWidth = 4;
@@ -195,28 +209,28 @@ export async function cardImage(c: CardCharacter, ctx0: CardContext): Promise<Bl
   ctx.textAlign = "center";
   ctx.fillStyle = "#fff";
   fitFont(ctx, c.name.toUpperCase(), 72, CW - 110, ANTON);
-  ctx.fillText(c.name.toUpperCase(), CW / 2, 720);
+  ctx.fillText(c.name.toUpperCase(), CW / 2, 788);
 
   ctx.font = `700 30px system-ui, sans-serif`;
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.fillText(`${c.type}  ·  ${r.label}`, CW / 2, 782);
+  ctx.fillText(`${c.type}  ·  ${r.label}`, CW / 2, 846);
 
   statsFor(c).forEach((st, i) => {
-    const bw = 196, gap = 21, x = 48 + i * (bw + gap), y = 818;
+    const bw = 196, gap = 21, x = 48 + i * (bw + gap), y = 874;
     ctx.fillStyle = "rgba(255,255,255,0.08)";
-    rr(ctx, x, y, bw, 108, 16);
+    rr(ctx, x, y, bw, 96, 16);
     ctx.fill();
     ctx.fillStyle = r.frame[0];
-    ctx.font = `56px ${ANTON}`;
-    ctx.fillText(String(st.value), x + bw / 2, y + 46);
+    ctx.font = `50px ${ANTON}`;
+    ctx.fillText(String(st.value), x + bw / 2, y + 40);
     ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.font = `700 22px system-ui, sans-serif`;
-    ctx.fillText(st.label, x + bw / 2, y + 88);
+    ctx.font = `700 21px system-ui, sans-serif`;
+    ctx.fillText(st.label, x + bw / 2, y + 78);
   });
 
   ctx.fillStyle = "rgba(255,255,255,0.65)";
   ctx.font = `600 24px system-ui, sans-serif`;
-  ctx.fillText(`🔍 ${ctx0.foundIn} · ${ctx0.site}`, CW / 2, 976);
+  ctx.fillText(`🔍 ${ctx0.foundIn} · ${ctx0.site}`, CW / 2, 1000);
 
   return new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error("toBlob failed"))), "image/png"));
 }
