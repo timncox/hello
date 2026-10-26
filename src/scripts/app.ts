@@ -1,4 +1,4 @@
-// Scrollture client app: infinite scripture feed + book/theme drill-down.
+// Bibblino Scrollino client app: infinite scripture feed + book/theme drill-down.
 // Vanilla TS, hash-routed, data lazy-loaded from /bible (see scripts/build-bible.mjs).
 // Narrated chapters in /media play as video cards; brainrot characters (src/data/characters.json)
 // open with a chant before the verse (see video.ts).
@@ -590,7 +590,7 @@ async function exportSheet(p: Card, play: Playable) {
   };
   try {
     const { blob, ext } = await renderVideo(play, meta, preview, (f) => (fill.style.width = `${f * 100}%`));
-    const file = new File([blob], `scrollture-${p.b}-${p.c}-${p.v}.${ext}`, { type: blob.type });
+    const file = new File([blob], `bibblino-${p.b}-${p.c}-${p.v}.${ext}`, { type: blob.type });
     status.textContent = `✅ Video ready (${(blob.size / 1e6).toFixed(1)} MB)`;
     const shareBtn = navigator.canShare?.({ files: [file] }) ? h("button", { class: "btn primary" }, "📤 Share video") : null;
     shareBtn?.addEventListener("click", () => navigator.share({ files: [file] }).catch(() => {}));
@@ -674,7 +674,7 @@ async function saveCard(char: Character) {
   try {
     const blob = await cardImage(char, cardContext(char));
     const file = new File([blob], `${char.id}-card.png`, { type: "image/png" });
-    if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text: `I collected ${char.name} on Scrollture 🤌` });
+    if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text: `I collected ${char.name} on Bibblino Scrollino 🤌` });
     else {
       const a = h("a", { href: URL.createObjectURL(blob), download: file.name });
       a.click();

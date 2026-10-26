@@ -10,7 +10,7 @@ const html = marked.parse(home.content) as string;
 <Base title={home.title} description={site.site.description} pageSlug="/" bare>
   <div id="app">
     <header class="topbar">
-      <a class="logo" href="#/">{site.site.name}</a>
+      <a class="logo" href="#/"><img class="logo-face" src="/icon.png" alt="" width="30" height="30" /><span>{site.site.name}</span></a>
       <nav class="tabs">
         <a href="#/" data-tab="feed">For You</a>
         <a href="#/books" data-tab="books">Books</a>

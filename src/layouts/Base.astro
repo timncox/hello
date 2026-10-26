@@ -13,6 +13,7 @@ const { title, description, pageSlug, bare = false } = Astro.props;
 const pageDescription = description ?? site.site.description;
 const fullTitle = pageSlug === "/" ? `${site.site.name} — ${site.site.tagline}` : `${title} · ${site.site.name}`;
 const canonicalUrl = site.site.url ? new URL(pageSlug, site.site.url).toString() : pageSlug;
+const ogImage = site.site.url ? new URL("/og.jpg", site.site.url).toString() : "/og.jpg";
 
 const fontStack: Record<string, string> = {
   sans: 'system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, sans-serif',
@@ -45,10 +46,15 @@ const navPages = getNonHomePages();
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content={site.site.name} />
+    <meta property="og:image" content={ogImage} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icon.png" />
 
     <link rel="alternate" type="application/json" href="/api/site.json" title={`${site.site.name} content (machine-readable)`} />
     <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-friendly site guide" />

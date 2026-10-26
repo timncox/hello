@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Anton&display=swap");
 
-/* Scrollture app styles. Colors come from the theme tokens in Base.astro (--accent, --bg, --fg...). */
+/* Bibblino Scrollino app styles. Colors come from the theme tokens in Base.astro (--accent, --bg, --fg...). */
 
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
@@ -13,7 +13,8 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0));
   color: #fff;
 }
-.logo { font-weight: 800; letter-spacing: -0.02em; color: #fff; font-size: 1.05rem; white-space: nowrap; }
+.logo { display: flex; align-items: center; gap: 0.45rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; font-size: 1.05rem; white-space: nowrap; }
+.logo-face { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px rgba(255,255,255,0.85); }
 .logo:hover { text-decoration: none; }
 .tabs { display: flex; gap: 0.15rem; margin: 0 auto; }
 .tabs a {
@@ -24,7 +25,8 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .tabs a.active { color: #fff; background: rgba(255,255,255,0.16); }
 .stats { font-size: 0.85rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 @media (max-width: 520px) {
-  .logo { display: none; }
+  .logo span { display: none; }
+  .logo-face { width: 26px; height: 26px; }
   .tabs { margin-left: 0; }
   .tabs a { padding: 0.35rem 0.5rem; font-size: 0.88rem; }
 }

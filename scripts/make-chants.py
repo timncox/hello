@@ -15,6 +15,7 @@ Usage (needs `pip install piper-tts faster-whisper`):
 import argparse
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -48,7 +49,7 @@ def voice_model() -> Path:
 
 
 def synth(text: str, raw: Path, out_mp3: Path, model: Path):
-    piper = Path(sys.executable).parent / "piper"
+    piper = shutil.which("piper") or Path(sys.executable).parent / "piper"
     subprocess.run([str(piper), "-m", str(model), "-f", str(raw)], input=text.encode(), check=True, capture_output=True)
     sr = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "stream=sample_rate", "-of", "csv=p=0", str(raw)],

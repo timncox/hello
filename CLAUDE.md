@@ -52,7 +52,9 @@ public/
 - robots.txt allowing all + pointing at sitemap
 - Semantic HTML5 throughout
 
-## Scrollture app (this site)
+## Bibblino Scrollino app (this site)
+
+The app is named after its mascot, the Bibblino Scrollino brainrot character (card #01, first in `src/data/characters.json`). localStorage keys keep the old `scrollture:*` prefix so existing users keep their state.
 
 The home page is a full-screen Bible feed app, not markdown content:
 
