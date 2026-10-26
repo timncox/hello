@@ -238,9 +238,13 @@ function punch(img: HTMLElement, strong: boolean) {
 }
 
 const LOOP_GAP_MS = 1200;
+/** A part counts as finished this close to its end (one threshold everywhere, so no check stops it early). */
+const END_SLACK = 0.03;
 
 export class Stage {
-  readonly audio = new Audio();
+  private audio = new Audio();
+  /** Loads the next clip (next part, or the next card) ahead of time, then swaps in so it starts without a gap. */
+  private spare = new Audio();
   muted = true;
   /** Playback speed for narration, chants and reading pace. */
   rate = 1;
@@ -248,6 +252,8 @@ export class Stage {
   current: Playable | null = null;
   /** Called when the current card finishes; return true if the app moved on. */
   onEnd: (p: Playable) => boolean = () => false;
+  /** The card that will play after this one, if the feed knows it. */
+  peekNext: (p: Playable) => Playable | null = () => null;
   onMutedChange: (muted: boolean) => void = () => {};
 
   private elapsed = 0;
@@ -259,9 +265,11 @@ export class Stage {
   private partIdx = -1; // part whose audio is loaded and playing
   private pending = false; // play() called, audio not started yet
   private phase = "";
+  private carrying = false; // narration keeps running into the next card (same recording, next verse)
 
   constructor() {
     this.audio.preload = "auto";
+    this.spare.preload = "auto";
     document.addEventListener("visibilitychange", () => this.syncAudio());
   }
 
@@ -285,7 +293,8 @@ export class Stage {
     const p = this.current;
     if (!p) return;
     cancelAnimationFrame(this.raf);
-    this.audio.pause();
+    if (this.carrying) setTimeout(() => this.carrying && this.stopCarry(), 1500);
+    else this.audio.pause();
     this.partIdx = -1;
     p.card.classList.remove("active", "paused", "looping");
     delete p.card.dataset.phase;
@@ -321,21 +330,57 @@ export class Stage {
   /** iOS only lets an element play later if it played inside a gesture once. */
   private unlock() {
     const src = this.current?.parts[0]?.clip.src;
-    if (this.audio.src || !src) return;
-    this.audio.src = src;
-    this.audio.muted = true;
-    this.audio.play().then(() => {
-      if (this.partIdx < 0) this.audio.pause();
-      this.audio.muted = false;
-    }, () => (this.audio.muted = false));
+    if (!src) return;
+    for (const el of [this.audio, this.spare]) {
+      if (el.dataset.unlocked) continue;
+      el.dataset.unlocked = "1";
+      if (!el.src) el.src = src;
+      el.muted = true;
+      el.play().then(() => {
+        if (el !== this.audio || this.partIdx < 0) el.pause();
+        el.muted = false;
+      }, () => (el.muted = false));
+    }
+  }
+
+  private stopCarry() {
+    this.carrying = false;
+    if (this.partIdx < 0) this.audio.pause();
+  }
+
+  /** The next card continues the same recording right where this one stops, so the audio can just keep going. */
+  private canCarry(p: Playable) {
+    const last = p.parts[p.parts.length - 1]?.clip;
+    const next = this.peekNext(p)?.parts[0]?.clip;
+    return !!(last && next && next.src === last.src && Math.abs(next.start - last.end) < 0.3);
+  }
+
+  /** Start buffering a clip on the spare element (unless the playing element already has that file). */
+  private warm(clip: Clip) {
+    const url = new URL(clip.src, location.href).href;
+    if (this.audio.src === url) return;
+    if (this.spare.src !== url) {
+      this.spare.src = url;
+      this.spare.addEventListener("loadedmetadata", () => (this.spare.currentTime = clip.start), { once: true });
+    } else if (this.spare.readyState >= 1 && Math.abs(this.spare.currentTime - clip.start) > 0.5) {
+      this.spare.currentTime = clip.start;
+    }
+  }
+
+  private warmNext() {
+    const p = this.current;
+    if (!p || this.muted) return;
+    const next = p.parts[this.partIdx + 1]?.clip ?? this.peekNext(p)?.parts[0]?.clip;
+    if (next) this.warm(next);
   }
 
   /** Make the audio element match the timeline: play the right part from the right spot, or stay quiet. */
   private syncAudio() {
     const p = this.current;
     const hit = p && !this.muted && !this.paused && !this.endedAt && !document.hidden ? partAt(p.parts, this.elapsed) : null;
-    const inPart = hit && hit.fileT < hit.part.clip.end - 0.03;
+    const inPart = hit && hit.fileT < hit.part.clip.end - END_SLACK;
     if (!hit || !inPart) {
+      this.carrying = false;
       this.audio.pause();
       this.partIdx = -1;
       this.pending = false;
@@ -344,7 +389,22 @@ export class Stage {
     if (hit.i === this.partIdx && !this.audio.paused) return;
     this.partIdx = hit.i;
     const url = new URL(hit.part.clip.src, location.href).href;
-    if (this.audio.src !== url) {
+    const carried = this.carrying;
+    this.carrying = false;
+    if (carried && this.audio.src === url && !this.audio.paused) {
+      // Still playing from the previous card: adopt it if it's at (or just short of) this clip's start.
+      const lead = hit.fileT - this.audio.currentTime;
+      if (lead > -1 && lead < 0.5) {
+        this.pending = false;
+        this.warmNext();
+        return;
+      }
+    }
+    if (this.audio.src !== url && this.spare.src === url) {
+      // The spare already buffered this clip: swap it in.
+      this.audio.pause();
+      [this.audio, this.spare] = [this.spare, this.audio];
+    } else if (this.audio.src !== url) {
       this.audio.src = url;
       const target = hit.fileT;
       this.audio.addEventListener("loadedmetadata", () => {
@@ -355,6 +415,7 @@ export class Stage {
     this.audio.defaultPlaybackRate = this.rate;
     this.audio.playbackRate = this.rate;
     this.pending = true;
+    this.warmNext();
     this.audio.play().then(
       () => (this.pending = false),
       () => {
@@ -386,12 +447,15 @@ export class Stage {
         if (part && this.pending) {
           // hold the timeline while the audio starts
         } else if (part && !this.audio.paused) {
-          if (this.audio.currentTime >= part.clip.end - 0.02 || this.audio.ended) {
+          if (this.audio.currentTime >= part.clip.end - END_SLACK || this.audio.ended) {
             this.elapsed = part.at + partLen(part);
-            this.audio.pause();
+            const last = this.partIdx === p.parts.length - 1;
+            this.carrying = last && !this.audio.ended && this.canCarry(p);
+            if (!this.carrying) this.audio.pause();
             this.partIdx = -1;
           } else {
-            this.elapsed = part.at + (this.audio.currentTime - part.clip.start);
+            // A carried-over clip can start a hair early; hold at the start rather than glitch.
+            this.elapsed = part.at + Math.max(0, this.audio.currentTime - part.clip.start);
           }
         } else if (part && this.audio.ended) {
           this.elapsed = part.at + partLen(part); // file ran out before the padded clip end
@@ -402,15 +466,16 @@ export class Stage {
         this.clock0 = now - this.elapsed * 1000;
 
         const hit = partAt(p.parts, this.elapsed);
-        const playing = hit && hit.fileT < hit.part.clip.end - 0.03 ? hit.i : -1;
+        const playing = hit && hit.fileT < hit.part.clip.end - END_SLACK ? hit.i : -1;
         if (!this.muted && playing !== this.partIdx) this.syncAudio();
 
         if (this.elapsed >= p.duration) {
           this.elapsed = p.duration;
-          this.audio.pause();
+          if (!this.carrying) this.audio.pause();
           this.partIdx = -1;
           this.endedAt = now;
           if (this.onEnd(p)) return;
+          if (this.carrying) this.stopCarry(); // not moving on (looping): stop here
         }
       }
     }

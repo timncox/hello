@@ -479,6 +479,12 @@ stage.onEnd = (play) => {
   return true;
 };
 
+// Lets the stage buffer the next card's audio, and keep narration running when it continues the same recording.
+stage.peekNext = (play) => {
+  const next = play.card.nextElementSibling;
+  return (next && cardData.get(next)?.play) ?? null;
+};
+
 function setAuto(on: boolean, message?: string) {
   autoScroll = on;
   store.set("autoplay", on);
